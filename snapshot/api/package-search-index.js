@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"io.micronaut.vaadin"},{"l":"io.micronaut.vaadin.info"}];updateSearchResults();
