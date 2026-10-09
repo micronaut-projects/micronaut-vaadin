@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 /**
- * Integration between Micronaut and Vaadin Flow.
+ * Browserless UI tests of Micronaut Vaadin applications, with Vaadin's browserless test library.
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
 @NullMarked
-package io.micronaut.vaadin;
+package io.micronaut.vaadin.browserless;
 
 import org.jspecify.annotations.NullMarked;

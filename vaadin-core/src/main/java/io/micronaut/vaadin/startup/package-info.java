@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 /**
- * Integration between Micronaut and Vaadin Flow.
+ * Starts Vaadin from the types known at compile time, without classpath scanning.
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
 @NullMarked
-package io.micronaut.vaadin;
+package io.micronaut.vaadin.startup;
 
 import org.jspecify.annotations.NullMarked;

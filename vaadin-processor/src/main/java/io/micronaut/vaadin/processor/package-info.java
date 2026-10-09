@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 /**
- * Integration between Micronaut and Vaadin Flow.
+ * Compile-time support for Micronaut Vaadin: makes the classes that Vaadin instantiates into beans.
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
 @NullMarked
-package io.micronaut.vaadin;
+package io.micronaut.vaadin.processor;
 
 import org.jspecify.annotations.NullMarked;
