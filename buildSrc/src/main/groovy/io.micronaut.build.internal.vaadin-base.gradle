@@ -1,0 +1,14 @@
+// Settings shared by every project of the build
+
+repositories {
+    mavenCentral()
+    // Micronaut 5.3 is unreleased. micronaut-build adds Maven Central to published modules, which
+    // hides the repositories declared in settings, so the snapshots repository is declared here too.
+    // Remove once the build moves to a released Micronaut 5.3.
+    maven {
+        url = "https://central.sonatype.com/repository/maven-snapshots/"
+        mavenContent {
+            snapshotsOnly()
+        }
+    }
+}

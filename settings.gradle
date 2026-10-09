@@ -6,16 +6,34 @@ pluginManagement {
 }
 
 plugins {
-    id 'io.micronaut.build.shared.settings' version '8.0.1'
+    id 'io.micronaut.build.shared.settings' version '8.1.4'
 }
 
-rootProject.name = 'project-template-parent'
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
+}
 
-include 'project-template'
-include 'project-template-bom'
+rootProject.name = 'vaadin-parent'
+
+include 'vaadin-bom'
+include 'vaadin-core'
+
+include 'test-suite'
+include 'test-suite-groovy'
+include 'test-suite-kotlin'
+include 'test-suite-python'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 
 micronautBuild {
+    useStandardizedProjectNames = true
+    // Micronaut 5.3 is unreleased: core snapshots come from the Central snapshots repository
+    addSnapshotRepository()
     importMicronautCatalog()
+    importMicronautCatalog("micronaut-security")
+    importMicronautCatalog("micronaut-serde")
+    importMicronautCatalog("micronaut-servlet")
+    importMicronautCatalog("micronaut-session")
 }

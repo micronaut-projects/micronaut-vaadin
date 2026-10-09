@@ -1,1 +1,21 @@
-TODO
+Add the Micronaut Vaadin dependency to your build:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-core[]
+
+The integration is configured under the `vaadin` prefix. The property names match those of Vaadin's Spring Boot integration, so the Vaadin documentation applies unchanged:
+
+[configuration]
+----
+vaadin:
+  url-mapping: /ui/*
+  exclude-urls:
+    - /api/**
+    - /health
+----
+
+The configuration is available as a bean:
+
+snippet::io.micronaut.vaadin.docs.quickstart.VaadinConfigurationTest[tags="config", indent=0, title="Reading the Vaadin configuration"]
+
+<1> Inject the `VaadinConfigurationProperties` bean.
+<2> The URL mapping of the Vaadin servlet, `/*` by default.

@@ -1,0 +1,13 @@
+// Convention for the documentation test suites (test-suite, test-suite-groovy, test-suite-kotlin, test-suite-python)
+plugins {
+    id 'io.micronaut.build.internal.vaadin-base'
+}
+
+dependencies {
+    testRuntimeOnly(mnTest.junit.platform.launcher)
+    testRuntimeOnly(mnTest.junit.jupiter.engine)
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
