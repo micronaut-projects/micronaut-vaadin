@@ -50,3 +50,14 @@ val nativeBrowserTest by tasks.registering(Test::class) {
     useJUnitPlatform()
     systemProperty("native.executable", layout.buildDirectory.file("native/nativeCompile/test-suite-native").get().asFile.absolutePath)
 }
+
+tasks.named("nativeTest") {
+    // the GraalVM CI workflow runs the nativeTest task of each project: here it runs the browser tests
+    // against the executable, rather than compiling the tests themselves into a native image
+    enabled = false
+    dependsOn(nativeBrowserTest)
+}
+
+tasks.named("nativeTestCompile") {
+    enabled = false
+}
