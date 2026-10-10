@@ -9,6 +9,9 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.reload.ReloadStrategy;
 import io.micronaut.dev.tck.ReloadHarness;
 import io.micronaut.dev.tck.ReloadTck;
+import io.micronaut.session.InMemorySession;
+import io.micronaut.session.InMemorySessionStore;
+import io.micronaut.session.Session;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -88,6 +91,54 @@ class VaadinDevReloadTest {
             assertTrue(RecordingHotswapper.REDEFINED.contains("example.HelloView"), "Flow's hotswap: " + RecordingHotswapper.REDEFINED);
         }
     }
+
+    @Test
+    void sessionsCarryOverARestartWithTheClassesOfTheNewGeneration() throws Exception {
+        try (ReloadHarness harness = harness()
+            .property("vaadin.devmode.session-serialization.enabled", "true")
+            .source("example.HelloView", view("HelloView", "hello", "Hello"))
+            .source("example.Counter", COUNTER)) {
+            String id = openSession(harness.start(), 3);
+
+            harness.source("example.GoodbyeView", view("GoodbyeView", "goodbye", "Goodbye"));
+            ApplicationContext second = harness.reload();
+
+            assertEquals(2, harness.generation());
+            Session session = second.getBean(InMemorySessionStore.class).findSession(id).join().orElseThrow();
+            Object counter = session.get("counter").orElseThrow();
+            assertEquals(second.getClassLoader(), counter.getClass().getClassLoader(), "the class of the new generation");
+            assertEquals(3, counter.getClass().getMethod("value").invoke(counter));
+            ReloadTck.assertRetiredGenerationsCollected(harness);
+        }
+    }
+
+    /**
+     * Opens a session that holds a counter of the first generation, and returns its id only.
+     */
+    private static String openSession(ApplicationContext context, int value) throws Exception {
+        InMemorySessionStore store = context.getBean(InMemorySessionStore.class);
+        InMemorySession session = store.newSession();
+        Object counter = context.getClassLoader().loadClass("example.Counter").getConstructor(int.class).newInstance(value);
+        session.put("counter", counter);
+        store.save(session).join();
+        return session.getId();
+    }
+
+    private static final String COUNTER = """
+        package example;
+
+        public class Counter implements java.io.Serializable {
+            private final int value;
+
+            public Counter(int value) {
+                this.value = value;
+            }
+
+            public int value() {
+                return value;
+            }
+        }
+        """;
 
     private ReloadHarness harness() {
         return ReloadHarness.inDirectory(project)

@@ -10,17 +10,21 @@ dependencies {
     api(mn.micronaut.inject)
     // Flow's hotswap, present when Vaadin runs in development mode
     compileOnly(libs.vaadin.dev.server)
+    // the HTTP sessions of the Netty runtime, carried over a restart when Vaadin's session serialization is on
+    compileOnly(mnSession.micronaut.session)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation("io.micronaut:micronaut-dev-tck")
     testImplementation(mn.micronaut.inject.java)
     testImplementation(projects.micronautVaadinProcessor)
     testImplementation(projects.micronautVaadinNetty)
+    testImplementation(mnSession.micronaut.session)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(libs.vaadin.core.components)
     testImplementation(libs.vaadin.dev.server)
     testImplementation(libs.vaadin.dev.bundle)
     testImplementation(mnTest.junit.jupiter.api)
+    testImplementation(libs.playwright)
     // attaches micronaut-dev's agent to the test JVM, for edits applied in place
     testImplementation("net.bytebuddy:byte-buddy-agent:1.18.13")
     testRuntimeOnly(mnTest.junit.jupiter.engine)

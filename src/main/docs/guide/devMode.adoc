@@ -49,4 +49,16 @@ Each change is handled as follows:
 * Any other change, such as a new view or a changed constructor, restarts the application. Vaadin starts again with the views of the new generation. A restart ends the Vaadin sessions: the browser reloads the page quietly instead of reporting that the session expired. Set `vaadin.dev.quiet-restart` to `false` to keep Vaadin's notification. An application that sets its own system messages keeps them.
 * Frontend sources, under `src/main/frontend`, stay with Vaadin's development server.
 
+To keep the Vaadin sessions, with their UIs, across a restart, enable Vaadin's session serialization for development mode:
+
+[configuration]
+----
+vaadin:
+  devmode:
+    session-serialization:
+      enabled: true
+----
+
+The stopping generation serializes the HTTP sessions, and the next one reads them back with its own classes: the browser keeps its session, and the views their state. Only serializable state carries over. A view that holds a bean which is not serializable, for example, is left behind, and the page reloads as without the option. This applies to the Netty server with Micronaut Session's in-memory store.
+
 Prefer the Netty server for the development loop: during a restart it keeps its port and holds the requests that arrive until the new generation serves them.
