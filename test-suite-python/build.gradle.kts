@@ -12,6 +12,7 @@ dependencies {
     testImplementation(projects.micronautVaadinProcessor)
 
     testImplementation(projects.micronautVaadinCore)
+    testImplementation(projects.micronautVaadinSecurity)
     testImplementation(projects.micronautVaadinBrowserlessTest)
     testImplementation(libs.vaadin.core.components)
     testImplementation(mnTest.micronaut.test.junit5)
