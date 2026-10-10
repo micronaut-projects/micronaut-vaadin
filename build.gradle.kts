@@ -1,12 +1,12 @@
 plugins {
-    id "io.micronaut.build.internal.parent"
+    id("io.micronaut.build.internal.parent")
 }
 
 repositories {
     // Micronaut 5.3 is unreleased: the code coverage aggregation resolves the modules' dependencies
     // here, so the root project needs the snapshots repository too (see vaadin-base).
     maven {
-        url = "https://central.sonatype.com/repository/maven-snapshots/"
+        url = uri("https://central.sonatype.com/repository/maven-snapshots/")
         mavenContent {
             snapshotsOnly()
         }

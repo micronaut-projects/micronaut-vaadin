@@ -1,5 +1,5 @@
 plugins {
-    id 'io.micronaut.build.internal.vaadin-module'
+    id("io.micronaut.build.internal.vaadin-module")
 }
 
 dependencies {
@@ -20,6 +20,6 @@ micronautBuild {
     binaryCompatibility.enabledAfter("1.0.0")
 }
 
-tasks.withType(Test).configureEach {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
