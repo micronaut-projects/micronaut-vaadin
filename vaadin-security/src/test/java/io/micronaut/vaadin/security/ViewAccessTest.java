@@ -38,8 +38,8 @@ class ViewAccessTest {
     void anonymousUsersAreSentToTheLoginView() {
         String page = page(HttpRequest.GET("/admin"));
         assertFalse(page.contains("Admin area"), page);
-        // the client is redirected to the login view
-        assertTrue(page.contains("[\"/login\",\"_self\""), page);
+        // Vaadin navigates to the login view, a view of the application, in place of the denied one
+        assertTrue(page.contains("Please log in"), page);
     }
 
     @Test
