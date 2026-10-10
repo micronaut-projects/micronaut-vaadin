@@ -54,9 +54,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 /**
@@ -71,7 +73,6 @@ final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
     private static final Logger LOG = LoggerFactory.getLogger(VaadinNettyRuntime.class);
-    private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
     private static final String VAADIN_PATH = "/" + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
 
     private final NettyServletContext servletContext;
@@ -81,6 +82,9 @@ final class VaadinNettyRuntime {
     private final Executor executor;
     private final String prefix;
     private final AtmosphereFramework atmosphere;
+    // by connection: the attributes of a WebSocket session are those of the HTTP session when Micronaut Session is
+    // present, which the push connections of every tab of the browser share
+    private final Map<String, AtmosphereWebSocket> webSockets = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
     VaadinNettyRuntime(ApplicationContext applicationContext,
@@ -208,7 +212,7 @@ final class VaadinNettyRuntime {
      */
     void openPush(WebSocketSession session, HttpRequest<?> request) {
         AtmosphereWebSocket webSocket = new AtmosphereWebSocket(atmosphere.getAtmosphereConfig(), session, executor);
-        session.put(WEBSOCKET_ATTRIBUTE, webSocket);
+        webSockets.put(session.getId(), webSocket);
         String path = request.getPath();
         NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, InputStream.nullInputStream(), servletContext, sessionStore,
             servletPath(path), pathInfo(path));
@@ -230,8 +234,10 @@ final class VaadinNettyRuntime {
      * @param message The message
      */
     void pushMessage(WebSocketSession session, String message) {
-        session.get(WEBSOCKET_ATTRIBUTE, AtmosphereWebSocket.class)
-            .ifPresent(webSocket -> webSocket.runInOrder(() -> processor().invokeWebSocketProtocol(webSocket, message)));
+        AtmosphereWebSocket webSocket = webSockets.get(session.getId());
+        if (webSocket != null) {
+            webSocket.runInOrder(() -> processor().invokeWebSocketProtocol(webSocket, message));
+        }
     }
 
     /**
@@ -241,8 +247,10 @@ final class VaadinNettyRuntime {
      * @param code    The close code
      */
     void closePush(WebSocketSession session, int code) {
-        session.get(WEBSOCKET_ATTRIBUTE, AtmosphereWebSocket.class)
-            .ifPresent(webSocket -> webSocket.runInOrder(() -> processor().close(webSocket, code)));
+        AtmosphereWebSocket webSocket = webSockets.remove(session.getId());
+        if (webSocket != null) {
+            webSocket.runInOrder(() -> processor().close(webSocket, code));
+        }
     }
 
     private String servletPath(String path) {
