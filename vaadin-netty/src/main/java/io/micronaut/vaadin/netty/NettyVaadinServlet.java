@@ -1,0 +1,56 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.vaadin.netty;
+
+import com.vaadin.flow.function.DeploymentConfiguration;
+import com.vaadin.flow.server.ServiceException;
+import com.vaadin.flow.server.VaadinServletService;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.vaadin.MicronautVaadinServlet;
+import io.micronaut.vaadin.MicronautVaadinServletService;
+
+import java.io.Serial;
+
+/**
+ * The Vaadin servlet on Netty. Push is not available yet: it needs the asynchronous servlet API.
+ *
+ * @author Graeme Rocher
+ * @since 1.0.0
+ */
+final class NettyVaadinServlet extends MicronautVaadinServlet {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    NettyVaadinServlet(ApplicationContext applicationContext) {
+        super(applicationContext);
+    }
+
+    @Override
+    protected VaadinServletService createServletService(DeploymentConfiguration deploymentConfiguration) throws ServiceException {
+        MicronautVaadinServletService service = new MicronautVaadinServletService(this, deploymentConfiguration, getApplicationContext()) {
+            @Serial
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected boolean isAtmosphereAvailable() {
+                return false;
+            }
+        };
+        service.init();
+        return service;
+    }
+}
