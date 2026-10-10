@@ -25,14 +25,19 @@ import io.micronaut.web.router.Router;
 import io.micronaut.web.router.resource.StaticResourceResolver;
 import jakarta.inject.Singleton;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.FilterRegistration;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRegistration;
+import jakarta.servlet.http.HttpFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.atmosphere.cpr.ApplicationConfig;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -99,6 +104,19 @@ public class VaadinServletInitializer implements ServletContainerInitializer {
             pushPath = mapping.substring(0, mapping.length() - 2) + "/" + Constants.PUSH_MAPPING;
         }
         registration.setInitParameter(ApplicationConfig.JSR356_MAPPING_PATH, pushPath);
+
+        // the filters of the Vaadin servlet, for its own requests and for those forwarded to it
+        for (VaadinServletFilter filter : applicationContext.getBeansOfType(VaadinServletFilter.class)) {
+            HttpFilter servletFilter = new HttpFilter() {
+                @Override
+                protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+                    filter.doFilter(request, response, chain);
+                }
+            };
+            FilterRegistration.Dynamic filterRegistration = servletContext.addFilter(SERVLET_NAME + ":" + filter.getClass().getName(), servletFilter);
+            filterRegistration.setAsyncSupported(true);
+            filterRegistration.addMappingForServletNames(EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC), true, SERVLET_NAME);
+        }
 
         if (rootMapping) {
             Optional<StaticResourceResolver> staticResources = applicationContext.findBean(StaticResourceResolver.class);

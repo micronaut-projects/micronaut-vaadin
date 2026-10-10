@@ -16,6 +16,7 @@
 package io.micronaut.vaadin.netty;
 
 import io.micronaut.http.HttpRequest;
+import io.micronaut.security.annotation.Secured;
 import io.micronaut.websocket.CloseReason;
 import io.micronaut.websocket.WebSocketSession;
 import io.micronaut.websocket.annotation.OnClose;
@@ -32,6 +33,7 @@ import io.micronaut.websocket.annotation.ServerWebSocket;
  * @since 1.0.0
  */
 @ServerWebSocket("/VAADIN/push")
+@Secured("isAnonymous()") // Vaadin controls the access to its views
 final class VaadinPushWebSocket {
 
     private final VaadinNettyRuntime runtime;

@@ -6,16 +6,13 @@ dependencies {
     annotationProcessor(mn.micronaut.inject.java)
 
     api(projects.micronautVaadinCore)
-    api(mn.micronaut.http.server.netty)
-    // Vaadin keeps its state in the HTTP session
-    api(mnSession.micronaut.session)
-    // push over WebSockets
-    api(mn.micronaut.websocket)
-    // the push endpoints let Micronaut Security, when present, hand their access control to Vaadin
-    compileOnly(mnSecurity.micronaut.security.annotations)
+    api(mnSecurity.micronaut.security)
+    // the authentication of Vaadin's requests on a servlet container, used when vaadin-servlet is present
+    compileOnly(projects.micronautVaadinServlet)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)
+    testImplementation(projects.micronautVaadinNetty)
     testImplementation(mn.micronaut.http.client.jdk)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(libs.vaadin.core.components)
