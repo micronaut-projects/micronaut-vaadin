@@ -2,4 +2,4 @@ This project integrates https://vaadin.com/flow[Vaadin Flow] with Micronaut. Vaa
 
 The integration targets Vaadin 25 and Micronaut 5.3. It runs Vaadin on the default Netty server and on the servlet containers of https://micronaut-projects.github.io/micronaut-servlet/latest/guide/[Micronaut Servlet] (Jetty, Tomcat and Undertow).
 
-WARNING: This project is under development. Views, dependency injection, the Vaadin scopes and browserless testing are available; running Vaadin on the Netty server or a servlet container is not yet.
+WARNING: This project is under development. Views, dependency injection, the Vaadin scopes, browserless testing and the servlet containers of Micronaut Servlet are available. Push, development mode and the Netty server are not yet.

@@ -22,7 +22,12 @@ import com.vaadin.flow.server.VaadinServlet;
 import com.vaadin.flow.server.VaadinServletService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.naming.NameUtils;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
 import java.io.Serial;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -48,12 +53,22 @@ public class MicronautVaadinServlet extends VaadinServlet {
     private static final List<String> INIT_PARAMETERS = initParameterNames();
 
     private final transient ApplicationContext applicationContext;
+    private final boolean rootMapping;
 
     /**
      * @param applicationContext The application context
      */
     public MicronautVaadinServlet(ApplicationContext applicationContext) {
+        this(applicationContext, false);
+    }
+
+    /**
+     * @param applicationContext The application context
+     * @param rootMapping        Whether Vaadin serves the root of the application, receiving its requests by forwarding
+     */
+    public MicronautVaadinServlet(ApplicationContext applicationContext, boolean rootMapping) {
         this.applicationContext = applicationContext;
+        this.rootMapping = rootMapping;
     }
 
     /**
@@ -61,6 +76,11 @@ public class MicronautVaadinServlet extends VaadinServlet {
      */
     public ApplicationContext getApplicationContext() {
         return applicationContext;
+    }
+
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        super.service(rootMapping && request.getPathInfo() == null ? new RootMappedRequest(request) : request, response);
     }
 
     @Override
@@ -107,5 +127,26 @@ public class MicronautVaadinServlet extends VaadinServlet {
             }
         }
         return Collections.unmodifiableList(names);
+    }
+
+    /**
+     * A request forwarded to a root-mapped Vaadin servlet: Vaadin expects the path of the request as its path info.
+     */
+    private static final class RootMappedRequest extends HttpServletRequestWrapper {
+
+        RootMappedRequest(HttpServletRequest request) {
+            super(request);
+        }
+
+        @Override
+        public String getServletPath() {
+            return "";
+        }
+
+        @Override
+        public String getPathInfo() {
+            String path = getRequestURI().substring(getContextPath().length());
+            return path.isEmpty() ? "/" : path;
+        }
     }
 }

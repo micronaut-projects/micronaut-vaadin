@@ -6,6 +6,8 @@ views:
   title: Views and Dependency Injection
 scopes:
   title: Vaadin Scopes
+servletRuntime:
+  title: Running on a Servlet Container
 testing:
   title: Testing
 repository: Repository
