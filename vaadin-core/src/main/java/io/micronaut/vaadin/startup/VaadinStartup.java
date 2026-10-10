@@ -72,7 +72,8 @@ public class VaadinStartup {
 
     /**
      * Initializes Vaadin in the given servlet context: its lookup, route registry, error views,
-     * application shell and web components.
+     * application shell and web components, and its development mode when
+     * {@code com.vaadin:vaadin-dev-server} is on the classpath.
      *
      * @param servletContext The servlet context
      * @throws ServletException If Vaadin fails to initialize
@@ -102,6 +103,10 @@ public class VaadinStartup {
             // the lookup is in place, so the initializers run straight away rather than through onStartup,
             // which also expects the servlet context to have a class loader
             initializer.process(handledTypes(initializer, types), servletContext);
+        }
+
+        if (ClassUtils.isPresent(DevModeStartup.DEV_MODE_STARTUP_LISTENER, classLoader)) {
+            DevModeStartup.initialize(typeIndex.getDevelopmentTypes(), servletContext);
         }
     }
 
