@@ -9,6 +9,8 @@ dependencies {
     api(mn.micronaut.http.server.netty)
     // Vaadin keeps its state in the HTTP session
     api(mnSession.micronaut.session)
+    // push over WebSockets
+    api(mn.micronaut.websocket)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)
