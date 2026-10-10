@@ -9,8 +9,11 @@ dependencies {
     // compiler takes the compile classpath as its annotation processor path.
     testImplementation(mn.micronaut.inject.python.test)
     testImplementation(mn.micronaut.context.python)
+    testImplementation(projects.micronautVaadinProcessor)
 
     testImplementation(projects.micronautVaadinCore)
+    testImplementation(projects.micronautVaadinBrowserlessTest)
+    testImplementation(libs.vaadin.core.components)
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(mnTest.junit.jupiter.api)
     testRuntimeOnly(mnLogging.logback.classic)
