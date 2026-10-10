@@ -62,7 +62,9 @@ final class VaadinSessionScopeImpl extends AbstractVaadinScope<VaadinSessionScop
                 store = new SessionBeanStore();
                 session.setAttribute(SessionBeanStore.class, store);
                 SessionBeanStore created = store;
-                session.addSessionDestroyListener(event -> destroy(created));
+                // the listener refers to the scope through its handle: Vaadin serializes it with the session
+                ScopeHandle handle = handle();
+                session.addSessionDestroyListener(event -> handle.destroy(created));
             }
             return store.beans();
         } finally {
