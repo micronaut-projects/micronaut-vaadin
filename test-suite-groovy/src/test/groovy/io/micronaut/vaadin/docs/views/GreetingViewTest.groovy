@@ -16,10 +16,10 @@ class GreetingViewTest extends MicronautBrowserlessTest { // <2>
     @Test
     void greetsTheVisitor() {
         navigate(GreetingView) // <3>
-        test($(TextField).single()).value = "Micronaut"
-        test($(Button).single()).click()
+        test(find(TextField).single()).value = "Micronaut"
+        test(find(Button).single()).click()
 
-        assertEquals("Hello Micronaut", $(Span).single().text)
+        assertEquals("Hello Micronaut", find(Span).single().text)
         assertEquals(2, applicationContext.getBean(VisitCounter).increment()) // <4>
     }
 }

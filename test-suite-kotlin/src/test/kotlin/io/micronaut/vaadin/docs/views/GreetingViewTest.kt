@@ -15,10 +15,10 @@ class GreetingViewTest : MicronautBrowserlessTest() { // <2>
     @Test
     fun greetsTheVisitor() {
         navigate(GreetingView::class.java) // <3>
-        test(`$`(TextField::class.java).single()).setValue("Micronaut")
-        test(`$`(Button::class.java).single()).click()
+        test(find(TextField::class.java).single()).setValue("Micronaut")
+        test(find(Button::class.java).single()).click()
 
-        assertEquals("Hello Micronaut", `$`(Span::class.java).single().text)
+        assertEquals("Hello Micronaut", find(Span::class.java).single().text)
         assertEquals(2, applicationContext.getBean(VisitCounter::class.java).increment()) // <4>
     }
 }

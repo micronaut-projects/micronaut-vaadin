@@ -19,7 +19,7 @@ class AccessControlTest extends MicronautBrowserlessTest {
     void anAnonymousVisitorOfAnAdminViewSignsInFirst() {
         navigate("admin", LoginView)
 
-        LoginForm form = $(LoginForm).single()
+        LoginForm form = find(LoginForm).single()
         assertEquals("login", form.action)
         assertFalse(form.error)
     }
@@ -28,6 +28,6 @@ class AccessControlTest extends MicronautBrowserlessTest {
     void theLoginViewShowsAFailedSignIn() {
         navigate("login?error", LoginView)
 
-        assertTrue($(LoginForm).single().error)
+        assertTrue(find(LoginForm).single().error)
     }
 }
