@@ -1,6 +1,9 @@
 plugins {
-    id 'io.micronaut.build.internal.vaadin-base'
-    id "io.micronaut.build.internal.bom"
+    id("io.micronaut.build.internal.vaadin-module")
+}
+
+dependencies {
+    api(mn.micronaut.core.processor)
 }
 
 micronautBuild {

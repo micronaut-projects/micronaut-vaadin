@@ -1,7 +1,7 @@
 plugins {
-    id 'java-library'
-    id 'io.micronaut.build.internal.vaadin-tests'
-    id 'io.micronaut.build.internal.python'
+    id("java-library")
+    id("io.micronaut.build.internal.vaadin-tests")
+    id("io.micronaut.build.internal.python")
 }
 
 dependencies {
@@ -16,6 +16,6 @@ dependencies {
     testRuntimeOnly(mnLogging.logback.classic)
 }
 
-tasks.withType(Test).configureEach {
-    systemProperty "micronaut.python.pool.enabled", "false"
+tasks.withType<Test>().configureEach {
+    systemProperty("micronaut.python.pool.enabled", "false")
 }

@@ -13,13 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.vaadin.annotation;
+
+import jakarta.inject.Scope;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
- * Integration between Micronaut and Vaadin Flow.
+ * Scopes a bean to a {@code UI}: one instance per browser window or tab, destroyed when the UI closes.
+ *
+ * <p>The bean can only be resolved while a Vaadin request is being processed, in other words when
+ * {@code UI.getCurrent()} is set.</p>
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
-@NullMarked
-package io.micronaut.vaadin;
-
-import org.jspecify.annotations.NullMarked;
+@Scope
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface UIScope {
+}

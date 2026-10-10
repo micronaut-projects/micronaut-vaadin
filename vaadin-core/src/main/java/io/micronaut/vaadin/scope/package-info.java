@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 /**
- * Integration between Micronaut and Vaadin Flow.
+ * Implementations of the Vaadin bean scopes.
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
+@Internal
 @NullMarked
-package io.micronaut.vaadin;
+package io.micronaut.vaadin.scope;
 
+import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NullMarked;
