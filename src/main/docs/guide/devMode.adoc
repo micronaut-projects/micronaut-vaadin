@@ -33,3 +33,20 @@ vaadin:
 === Production mode
 
 Set `vaadin.production-mode` to `true`, or build with the production profile of Vaadin's plugin, which also builds the production frontend bundle. Leave `com.vaadin:vaadin-dev` out of production builds.
+
+=== Micronaut's development mode
+
+Micronaut's development mode (`micronaut-dev`) recompiles the application as its sources change, and applies each change in place or restarts the application with a new generation of its classes. Add Micronaut Vaadin's development module next to Vaadin's, for development only:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-dev[scope="developmentOnly"]
+
+WARNING: Micronaut's development mode is experimental and is not released yet: `micronaut-vaadin-dev` builds against its branch of Micronaut core.
+
+Each change is handled as follows:
+
+* An edit of method bodies is applied in place, without a restart, when the development agent is attached. Vaadin's own hotswap then clears its caches of the changed classes and refreshes the views that use them: the session and the state of the UI are kept.
+* An edit of the translations under `vaadin-i18n` reaches the running application without a restart.
+* Any other change, such as a new view or a changed constructor, restarts the application. Vaadin starts again with the views of the new generation. A restart ends the Vaadin sessions: the browser reloads the page quietly instead of reporting that the session expired. Set `vaadin.dev.quiet-restart` to `false` to keep Vaadin's notification. An application that sets its own system messages keeps them.
+* Frontend sources, under `src/main/frontend`, stay with Vaadin's development server.
+
+Prefer the Netty server for the development loop: during a restart it keeps its port and holds the requests that arrive until the new generation serves them.

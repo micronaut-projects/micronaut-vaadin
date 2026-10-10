@@ -268,6 +268,7 @@ final class VaadinNettyRuntime {
     @PreDestroy
     void destroy() {
         servlet.destroy();
+        servletContext.destroy();
     }
 
     private static String prefixOf(String mapping) {
