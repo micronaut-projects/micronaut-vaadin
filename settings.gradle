@@ -25,6 +25,7 @@ include 'vaadin-servlet'
 
 include 'test-suite'
 include 'test-suite-dev-mode'
+include 'test-suite-e2e'
 include 'test-suite-groovy'
 include 'test-suite-kotlin'
 include 'test-suite-python'
