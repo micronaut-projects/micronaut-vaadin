@@ -13,10 +13,16 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Vaadin in a real browser: the client loads, talks to the server, and receives pushed updates.
@@ -27,6 +33,8 @@ class BrowserTest {
 
     @Inject
     EmbeddedServer server;
+
+    private static final String ATMOSPHERE_TRANSPORT = "X-Atmosphere-Transport";
 
     private Playwright playwright;
     private Browser browser;
@@ -98,5 +106,31 @@ class BrowserTest {
         page.navigate(url("/push"));
         page.locator("#start").click();
         assertThat(page.locator("#status")).hasText("pushed");
+    }
+
+    @Test
+    void backgroundUpdatesArePushedOverLongPollingWithoutWebSockets() {
+        // without WebSocket in the browser, Atmosphere falls back to long polling
+        page.addInitScript("delete window.WebSocket");
+        List<String> transports = new CopyOnWriteArrayList<>();
+        page.onRequest(request -> {
+            String transport = queryParameter(request.url(), ATMOSPHERE_TRANSPORT);
+            if (transport != null) {
+                transports.add(transport);
+            }
+        });
+        // click once a poll waits for updates, past Atmosphere's handshake: an update pushed during the
+        // handshake is a race between Vaadin and Atmosphere's client, whatever the server
+        page.waitForRequest(request -> "long-polling".equals(queryParameter(request.url(), ATMOSPHERE_TRANSPORT))
+                && !"0".equals(queryParameter(request.url(), "X-Atmosphere-tracking-id")),
+            () -> page.navigate(url("/push")));
+        page.locator("#start").click();
+        assertThat(page.locator("#status")).hasText("pushed");
+        assertFalse(transports.contains("websocket"), "transports: " + transports);
+    }
+
+    private static @Nullable String queryParameter(String url, String name) {
+        Matcher matcher = Pattern.compile("[?&]" + Pattern.quote(name) + "=([^&]*)").matcher(url);
+        return matcher.find() ? matcher.group(1) : null;
     }
 }
