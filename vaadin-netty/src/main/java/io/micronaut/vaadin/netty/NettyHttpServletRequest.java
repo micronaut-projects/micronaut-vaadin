@@ -27,6 +27,7 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -77,6 +78,7 @@ final class NettyHttpServletRequest implements HttpServletRequest {
     private @Nullable NettyHttpSession session;
     private @Nullable Supplier<NettyAsyncContext> asyncContextFactory;
     private @Nullable NettyAsyncContext asyncContext;
+    private @Nullable List<NettyPart> parts;
 
     NettyHttpServletRequest(HttpRequest<?> request,
                             InputStream body,
@@ -254,14 +256,29 @@ final class NettyHttpServletRequest implements HttpServletRequest {
         throw unsupported();
     }
 
-    @Override
-    public Collection<Part> getParts() {
-        throw unsupported();
+    /**
+     * @param parts The parts of the multipart request, read before the servlet handles it
+     */
+    void setParts(List<NettyPart> parts) {
+        this.parts = parts;
     }
 
     @Override
-    public @Nullable Part getPart(String name) {
-        throw unsupported();
+    public Collection<Part> getParts() throws ServletException {
+        if (parts == null) {
+            throw new ServletException("The request is not a multipart request");
+        }
+        return List.copyOf(parts);
+    }
+
+    @Override
+    public @Nullable Part getPart(String name) throws ServletException {
+        for (Part part : getParts()) {
+            if (part.getName().equals(name)) {
+                return part;
+            }
+        }
+        return null;
     }
 
     @Override

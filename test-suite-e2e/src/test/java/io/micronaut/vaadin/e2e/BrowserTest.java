@@ -3,6 +3,7 @@ package io.micronaut.vaadin.e2e;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.FilePayload;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.nio.charset.StandardCharsets;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -80,6 +83,14 @@ class BrowserTest {
         assertThat(page.locator("#count")).hasText("1");
         page.locator("#count-button").click();
         assertThat(page.locator("#count")).hasText("2");
+    }
+
+    @Test
+    void filesAreUploaded() {
+        page.navigate(url("/upload"));
+        page.locator("#upload input[type=file]").setInputFiles(
+            new FilePayload("hello.txt", "text/plain", "Hello from a file".getBytes(StandardCharsets.UTF_8)));
+        assertThat(page.locator("#result")).hasText("hello.txt: Hello from a file");
     }
 
     @Test
