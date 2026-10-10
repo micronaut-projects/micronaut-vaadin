@@ -1,0 +1,26 @@
+A Micronaut Vaadin application on the Netty server can be compiled into a GraalVM native image. Build it in production mode, with the frontend bundle in the jar of the application (see <<production, Production Builds>>), and build the image from that jar, with the `nativeCompile` task of Micronaut's Gradle plugin or the `native` packaging of Micronaut's Maven plugin.
+
+[source,kotlin]
+----
+plugins {
+    id("io.micronaut.application") version "..."
+    id("com.vaadin") version "25.3.1"
+}
+
+vaadin {
+    productionMode = true
+}
+----
+
+The modules of Micronaut Vaadin register for the image what Vaadin and its libraries use through reflection:
+
+* the routes, layouts and other components of the application and of Vaadin, with their events;
+* the classes of Vaadin that Flow sends to the browser as JSON, such as the translations of components;
+* the classes of Atmosphere, which carries push;
+* the bundle, the build information and the other resources of Vaadin.
+
+No classpath scanning is needed at runtime: the views are known at build time, as on the JVM.
+
+Register the classes of the application that Vaadin serializes by reflection yourself, for example the beans of a `Binder` or of a `Grid` that are read with property names, with `@ReflectiveAccess` or `@Introspected`.
+
+NOTE: The native image is tested on the Netty server. A servlet container in a native image depends on the native image support of that container.

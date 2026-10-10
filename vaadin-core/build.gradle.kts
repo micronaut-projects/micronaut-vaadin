@@ -12,6 +12,8 @@ dependencies {
     api(mnServlet.servlet.api)
     // Development mode, used when the application has vaadin-dev-server on its classpath
     compileOnly(libs.vaadin.dev.server)
+    // the reflection of Vaadin in native images, registered when the image is built
+    compileOnly(mn.graalvm.nativeimage)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)

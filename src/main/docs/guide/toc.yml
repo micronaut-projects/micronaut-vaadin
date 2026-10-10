@@ -14,6 +14,8 @@ devMode:
   title: Development Mode
 production:
   title: Production Builds
+nativeImage:
+  title: GraalVM Native Image
 security:
   title: Security
 testing:
