@@ -18,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -103,7 +104,7 @@ class NettyAsyncContextTest {
     void tasksRunOnTheExecutor() throws Exception {
         CompletableFuture<String> thread = new CompletableFuture<>();
         asyncContext().start(() -> thread.complete(Thread.currentThread().getName()));
-        assertFalse(thread.get(5, TimeUnit.SECONDS).equals(Thread.currentThread().getName()));
+        assertNotEquals(Thread.currentThread().getName(), thread.get(5, TimeUnit.SECONDS));
     }
 
     @Test
