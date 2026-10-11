@@ -1,0 +1,24 @@
+Micronaut Vaadin runs on Micronaut's default Netty server, with no servlet container. Add the Netty integration:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-netty[]
+
+Vaadin's requests are served by functional routes, on the blocking executor: Vaadin holds the lock of a user's session while it runs application code, which must never block an event loop. Vaadin itself is written against the servlet API, so the integration gives it a request, a response and a servlet context of its own, backed by Micronaut.
+
+=== URL mapping
+
+`vaadin.url-mapping` and `vaadin.exclude-urls` work as on a servlet container. With the default `/*`, Vaadin serves the root of the application next to your controllers: the routes of the controllers win, and the paths of static resources and of `vaadin.exclude-urls` stay with Micronaut.
+
+Micronaut filters, including those of Micronaut Security, apply to Vaadin's requests like to any other route.
+
+=== Sessions
+
+Vaadin keeps its state in a session of https://micronaut-projects.github.io/micronaut-session/latest/guide/[Micronaut Session], which the integration brings in. The session is tracked with Micronaut Session's cookie, named `SESSION` by default. A Vaadin session holds the components of the user interface, so keep the sessions in memory and use sticky sessions when the application has several instances.
+
+=== Limitations
+
+The Netty integration does not support yet:
+
+* push, which also means that the live reload of Vaadin's development tools does not connect
+* file uploads, which need the multipart support of the servlet API
+
+Use a servlet container for these until they are available.
