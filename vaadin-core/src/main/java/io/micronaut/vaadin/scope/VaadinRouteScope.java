@@ -49,6 +49,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Graeme Rocher
  * @since 1.0.0
  */
+// Serializable only as Vaadin's UIInitListener is: the scope is a bean, which is never serialized
+@SuppressWarnings("java:S2055")
 @Internal
 @Singleton
 final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements UIInitListener {
