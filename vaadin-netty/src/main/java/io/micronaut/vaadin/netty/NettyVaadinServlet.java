@@ -25,7 +25,7 @@ import io.micronaut.vaadin.MicronautVaadinServletService;
 import java.io.Serial;
 
 /**
- * The Vaadin servlet on Netty. Push is not available yet: it needs the asynchronous servlet API.
+ * The Vaadin servlet on Netty. Push runs over long polling: Netty has no JSR-356 WebSocket container.
  *
  * @author Graeme Rocher
  * @since 1.0.0
@@ -41,15 +41,7 @@ final class NettyVaadinServlet extends MicronautVaadinServlet {
 
     @Override
     protected VaadinServletService createServletService(DeploymentConfiguration deploymentConfiguration) throws ServiceException {
-        MicronautVaadinServletService service = new MicronautVaadinServletService(this, deploymentConfiguration, getApplicationContext()) {
-            @Serial
-            private static final long serialVersionUID = 1L;
-
-            @Override
-            protected boolean isAtmosphereAvailable() {
-                return false;
-            }
-        };
+        MicronautVaadinServletService service = new MicronautVaadinServletService(this, deploymentConfiguration, getApplicationContext());
         service.init();
         return service;
     }

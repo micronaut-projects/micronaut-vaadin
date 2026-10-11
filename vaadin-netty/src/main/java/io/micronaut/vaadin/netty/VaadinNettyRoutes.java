@@ -73,7 +73,7 @@ final class VaadinNettyRoutes implements HttpRoutes {
             .executeOn(TaskExecutors.BLOCKING)
             .where(RouteCondition.custom(this::handledByVaadin))
             .body()
-            .handle((request, pathVariables, body) -> runtime.service(request, body));
+            .handleAsync((request, pathVariables, body) -> runtime.service(request, body));
     }
 
     private boolean handledByVaadin(HttpRequest<?> request) {

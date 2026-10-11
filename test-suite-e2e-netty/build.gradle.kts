@@ -3,15 +3,11 @@ plugins {
     id("io.micronaut.build.internal.vaadin-tests")
 }
 
-// The browser tests of test-suite-e2e, on Netty. Push is not available on Netty yet, so its view, the
-// application shell that enables it, and its test are left out
+// The browser tests of test-suite-e2e, on Netty
 val e2eTests = project(":test-suite-e2e").file("src/test")
 sourceSets {
     named("test") {
-        java {
-            srcDir(File(e2eTests, "java"))
-            exclude("**/app/PushView.java", "**/app/AppShell.java")
-        }
+        java.srcDir(File(e2eTests, "java"))
         resources.srcDir(File(e2eTests, "resources"))
     }
 }
@@ -30,9 +26,6 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    filter {
-        excludeTestsMatching("*.BrowserTest.backgroundUpdatesArePushed")
-    }
     // development mode writes generated frontend files into the project: keep them under build/
     val projectDir = layout.buildDirectory.dir("vaadin-project")
     doFirst {
