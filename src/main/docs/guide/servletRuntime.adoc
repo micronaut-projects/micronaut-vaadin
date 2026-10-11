@@ -51,6 +51,3 @@ dependency:io.micronaut.servlet:micronaut-servlet-websocket[]
 
 The push endpoint is `/VAADIN/push`, or below the prefix of `vaadin.url-mapping`.
 
-=== Production builds
-
-In production mode, Vaadin serves the frontend bundle built by its Gradle or Maven plugin. Apply the plugin to the application and run its `build-frontend` step for production builds, as with any Vaadin application.

@@ -40,3 +40,6 @@ src/main/docs/resources/img/micronaut-logo-white.svg
 
 # OpenCode files
 .sisyphus/
+
+# Ignore the frontend sources that Vaadin generates
+**/src/main/frontend/generated/
