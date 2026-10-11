@@ -74,7 +74,7 @@ final class NettyPart implements Part {
     public long getSize() {
         try {
             return Files.size(file);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return -1;
         }
     }
