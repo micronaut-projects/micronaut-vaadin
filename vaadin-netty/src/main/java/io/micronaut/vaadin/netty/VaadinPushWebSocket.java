@@ -27,14 +27,15 @@ import io.micronaut.websocket.annotation.OnOpen;
 import io.micronaut.websocket.annotation.ServerWebSocket;
 
 /**
- * The WebSocket endpoint of Vaadin's push on Netty, when Vaadin serves the root. Its events arrive in order on the event loop, and
+ * The WebSocket endpoint of Vaadin's push on Netty, at {@code /VAADIN/push} when Vaadin serves the root, and under
+ * the prefix of its mapping otherwise, such as {@code /ui/VAADIN/push} for {@code /ui/*}. Its events arrive in order on the event loop, and
  * {@link AtmosphereWebSocket} runs them in that order on the blocking executor: Vaadin locks the session
  * of the user while it handles a message.
  *
  * @author Graeme Rocher
  * @since 1.0.0
  */
-@ServerWebSocket("/VAADIN/push")
+@ServerWebSocket("{/prefix}/VAADIN/push")
 @Secured("isAnonymous()") // Vaadin controls the access to its views
 final class VaadinPushWebSocket {
 
