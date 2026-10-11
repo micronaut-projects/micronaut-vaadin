@@ -2,6 +2,7 @@ package io.micronaut.vaadin.servlet;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -35,7 +36,8 @@ class PrefixMappingTest {
     @Test
     void theRestBelongsToMicronaut() {
         assertEquals("Hello from Micronaut", client.toBlocking().retrieve("/api/hello"));
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve("/missing"));
+        BlockingHttpClient blocking = client.toBlocking();
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve("/missing"));
         assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
     }
 }
