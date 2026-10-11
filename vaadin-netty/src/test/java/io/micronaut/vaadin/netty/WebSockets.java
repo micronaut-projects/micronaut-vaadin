@@ -25,7 +25,7 @@ final class WebSockets {
                 .get(10, TimeUnit.SECONDS);
             webSocket.abort();
             return true;
-        } catch (Exception e) {
+        } catch (Exception _) {
             return false;
         }
     }
