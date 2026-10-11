@@ -46,8 +46,9 @@ import java.util.concurrent.CompletableFuture;
  * Micronaut Security, which only run for Micronaut's own routes there, and makes the
  * {@link Authentication} the principal of the request, with its roles.
  *
- * <p>The fetchers see the method, URI, headers and cookies of the request, which suits stateless
- * authentication: HTTP Basic, or a token in a cookie or a header.</p>
+ * <p>The fetchers see the method, URI, headers and cookies of the request, and its Micronaut session when
+ * Micronaut Session is present: HTTP Basic, a token in a cookie or a header, or an authentication kept in
+ * the session.</p>
  *
  * @author Graeme Rocher
  * @since 1.0.0
@@ -58,9 +59,11 @@ import java.util.concurrent.CompletableFuture;
 final class VaadinAuthenticationFilter implements VaadinServletFilter {
 
     private final List<AuthenticationFetcher<HttpRequest<?>>> fetchers;
+    private final @Nullable VaadinSessionResolver sessionResolver;
 
-    VaadinAuthenticationFilter(List<AuthenticationFetcher<HttpRequest<?>>> fetchers) {
+    VaadinAuthenticationFilter(List<AuthenticationFetcher<HttpRequest<?>>> fetchers, @Nullable VaadinSessionResolver sessionResolver) {
         this.fetchers = fetchers;
+        this.sessionResolver = sessionResolver;
     }
 
     @Override
@@ -73,7 +76,10 @@ final class VaadinAuthenticationFilter implements VaadinServletFilter {
         if (fetchers.isEmpty()) {
             return null;
         }
-        HttpRequest<?> micronautRequest = toMicronautRequest(request);
+        MutableHttpRequest<?> micronautRequest = toMicronautRequest(request);
+        if (sessionResolver != null) {
+            sessionResolver.attachSession(micronautRequest);
+        }
         for (AuthenticationFetcher<HttpRequest<?>> fetcher : fetchers) {
             Authentication authentication = first(fetcher.fetchAuthentication(micronautRequest));
             if (authentication != null) {
@@ -119,7 +125,7 @@ final class VaadinAuthenticationFilter implements VaadinServletFilter {
         return result.join();
     }
 
-    private static HttpRequest<?> toMicronautRequest(HttpServletRequest request) {
+    private static MutableHttpRequest<?> toMicronautRequest(HttpServletRequest request) {
         String uri = request.getRequestURI() + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
         MutableHttpRequest<Object> micronautRequest = new SimpleHttpRequest<>(HttpMethod.parse(request.getMethod()), uri, null);
         for (String name : Collections.list(request.getHeaderNames())) {
