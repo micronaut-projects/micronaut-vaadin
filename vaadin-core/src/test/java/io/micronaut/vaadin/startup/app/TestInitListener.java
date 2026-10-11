@@ -8,5 +8,6 @@ import jakarta.inject.Singleton;
 public class TestInitListener implements VaadinServiceInitListener {
     @Override
     public void serviceInit(ServiceInitEvent event) {
+        // only its registration with Vaadin is tested
     }
 }
