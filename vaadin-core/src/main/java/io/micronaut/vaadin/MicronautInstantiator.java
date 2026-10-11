@@ -90,10 +90,10 @@ public class MicronautInstantiator extends DefaultInstantiator {
 
     @Override
     public <T extends Component> T createComponent(Class<T> componentClass) {
-        if (beanContext.findBeanDefinition(componentClass).isPresent()) {
-            return beanContext.createBean(componentClass);
-        }
-        return super.createComponent(componentClass);
+        // a bean of that very class: the beans of its subclasses, such as the views extending Div, are other components
+        boolean bean = beanContext.getBeanDefinitions(componentClass).stream()
+            .anyMatch(definition -> definition.getBeanType().equals(componentClass));
+        return bean ? beanContext.createBean(componentClass) : super.createComponent(componentClass);
     }
 
     @Override
