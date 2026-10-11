@@ -37,3 +37,5 @@ public class StepOne extends Div {
 ----
 
 The bean lives as long as `MainLayout` stays in the navigation chain.
+
+The beans of the route scope belong to the browser window, by its name: when the user reloads the page, the new UI of the window keeps the beans whose owners it navigates to, as the Spring integration of Vaadin does. The beans of a window that closes are destroyed with the session.
