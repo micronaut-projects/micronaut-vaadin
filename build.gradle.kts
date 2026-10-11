@@ -12,3 +12,9 @@ repositories {
         }
     }
 }
+
+// The test suites exercise the modules end to end (browsers, HTTP, servlet containers, security): their test runs
+// count toward the coverage of the modules' classes in the aggregate report that SonarCloud reads
+dependencies {
+    subprojects.filter { it.name.startsWith("test-suite") }.forEach { "jacocoAggregation"(it) }
+}
