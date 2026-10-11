@@ -3,6 +3,7 @@ package io.micronaut.vaadin.security;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -62,8 +63,9 @@ class ViewAccessTest {
 
     @Test
     void micronautSecurityStillProtectsTheControllers() {
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/secret")));
+        BlockingHttpClient blocking = client.toBlocking();
+        HttpRequest<?> anonymous = HttpRequest.GET("/api/secret");
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve(anonymous));
         assertEquals(HttpStatus.UNAUTHORIZED, e.getStatus());
         assertEquals("secret", client.toBlocking().retrieve(HttpRequest.GET("/api/secret").basicAuth("user", "secret")));
     }
