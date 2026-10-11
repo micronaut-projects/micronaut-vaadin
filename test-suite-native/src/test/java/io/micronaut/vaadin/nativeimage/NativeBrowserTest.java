@@ -19,8 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -47,9 +49,9 @@ class NativeBrowserTest {
             .start();
         Instant deadline = Instant.now().plus(Duration.ofSeconds(60));
         while (!listening()) {
-            assertTrue(application.isAlive(), "The native executable exited with " + (application.isAlive() ? "" : application.exitValue()));
             assertTrue(Instant.now().isBefore(deadline), "The native executable did not start");
-            Thread.sleep(100);
+            // waits a little for the executable, failing if it exits
+            assertFalse(application.waitFor(100, TimeUnit.MILLISECONDS), () -> "The native executable exited with " + application.exitValue());
         }
         playwright = Playwright.create();
         browser = playwright.chromium().launch();
@@ -115,9 +117,9 @@ class NativeBrowserTest {
     }
 
     private boolean listening() {
-        try (Socket socket = new Socket("localhost", port)) {
+        try (Socket _ = new Socket("localhost", port)) {
             return true;
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }
