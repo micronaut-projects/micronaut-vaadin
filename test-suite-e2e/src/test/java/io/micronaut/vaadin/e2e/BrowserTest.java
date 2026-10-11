@@ -129,6 +129,19 @@ class BrowserTest {
         assertFalse(transports.contains("websocket"), "transports: " + transports);
     }
 
+    @Test
+    void routeScopedBeansSurviveAReloadOfTheirWindow() {
+        page.navigate(url("/wizard"));
+        String draft = page.locator("#draft").textContent();
+        page.reload();
+        assertThat(page.locator("#draft")).hasText(draft);
+        // leaving the route ends the scope of its beans
+        page.navigate(url("/"));
+        assertThat(page.locator("#greeting")).hasText("Hello from Vaadin");
+        page.navigate(url("/wizard"));
+        assertThat(page.locator("#draft")).not().hasText(draft);
+    }
+
     private static @Nullable String queryParameter(String url, String name) {
         Matcher matcher = Pattern.compile("[?&]" + Pattern.quote(name) + "=([^&]*)").matcher(url);
         return matcher.find() ? matcher.group(1) : null;
