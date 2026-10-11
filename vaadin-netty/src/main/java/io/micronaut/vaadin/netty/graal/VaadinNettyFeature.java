@@ -71,7 +71,7 @@ public final class VaadinNettyFeature implements Feature {
         try {
             RuntimeReflection.register(type);
             RuntimeReflection.register(type.getDeclaredField(FACTORY_FIELD));
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException _) {
             // not a factory
         }
     }
