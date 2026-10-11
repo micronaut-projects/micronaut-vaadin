@@ -47,7 +47,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -87,7 +86,8 @@ final class VaadinNettyRuntime {
     private final Executor executor;
     private final String prefix;
     private final AtmosphereFramework atmosphere;
-    private volatile @Nullable Path uploadDirectory;
+    // guarded by this
+    private @Nullable Path uploadDirectory;
 
     @SuppressWarnings("unchecked")
     VaadinNettyRuntime(ApplicationContext applicationContext,
@@ -189,19 +189,23 @@ final class VaadinNettyRuntime {
         return directory;
     }
 
+    private synchronized void deleteUploadDirectory() {
+        if (uploadDirectory != null) {
+            try {
+                Files.deleteIfExists(uploadDirectory);
+            } catch (IOException e) {
+                LOG.debug("Cannot delete the directory of uploaded parts {}", uploadDirectory, e);
+            }
+        }
+    }
+
     private static Path createPrivateDirectory() throws IOException {
         if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
             return Files.createTempDirectory(UPLOAD_PREFIX, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
         }
-        // elsewhere, as on Windows, the temporary directory of the JVM is in the profile of the user
-        Path directory = Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), UPLOAD_PREFIX);
-        File plain = directory.toFile();
-        if (!(plain.setReadable(false, false) && plain.setReadable(true, true)
-            && plain.setWritable(false, false) && plain.setWritable(true, true)
-            && plain.setExecutable(false, false) && plain.setExecutable(true, true))) {
-            LOG.debug("Could not restrict the permissions of {}", directory);
-        }
-        return directory;
+        // elsewhere, as on Windows, the temporary directory of the JVM is in the profile of the user, whose permissions
+        // the directory inherits
+        return Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), UPLOAD_PREFIX);
     }
 
     private List<NettyPart> readParts(AsyncRequestBody body) {
@@ -304,14 +308,7 @@ final class VaadinNettyRuntime {
     @PreDestroy
     void destroy() {
         servlet.destroy();
-        Path directory = uploadDirectory;
-        if (directory != null) {
-            try {
-                Files.deleteIfExists(directory);
-            } catch (IOException e) {
-                LOG.debug("Cannot delete the directory of uploaded parts {}", directory, e);
-            }
-        }
+        deleteUploadDirectory();
     }
 
     private static String prefixOf(String mapping) {
