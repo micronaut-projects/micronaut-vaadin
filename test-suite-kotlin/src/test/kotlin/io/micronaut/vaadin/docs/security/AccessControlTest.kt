@@ -18,7 +18,7 @@ class AccessControlTest : MicronautBrowserlessTest() {
     fun anAnonymousVisitorOfAnAdminViewSignsInFirst() {
         navigate("admin", LoginView::class.java)
 
-        val form = `$`(LoginForm::class.java).single()
+        val form = find(LoginForm::class.java).single()
         assertEquals("login", form.action)
         assertFalse(form.isError)
     }
@@ -27,6 +27,6 @@ class AccessControlTest : MicronautBrowserlessTest() {
     fun theLoginViewShowsAFailedSignIn() {
         navigate("login?error", LoginView::class.java)
 
-        assertTrue(`$`(LoginForm::class.java).single().isError)
+        assertTrue(find(LoginForm::class.java).single().isError)
     }
 }
