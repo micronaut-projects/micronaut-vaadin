@@ -106,16 +106,25 @@ public final class VaadinFeature implements Feature {
      * with their inner classes.
      */
     private static boolean isSerializedComponentModel(String className) {
-        return className.matches(".*I18[nN](\\$.*)?")
+        return isTranslations(className)
             || className.startsWith(COMPONENT_PACKAGE + ".charts.model.")
             || className.startsWith(COMPONENT_PACKAGE + ".map.configuration.");
+    }
+
+    private static boolean isTranslations(String className) {
+        for (String suffix : new String[] {"I18n", "I18N"}) {
+            if (className.endsWith(suffix) || className.contains(suffix + "$")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void registerConstructors(Class<?> type) {
         try {
             RuntimeReflection.register(type);
             RuntimeReflection.register(type.getDeclaredConstructors());
-        } catch (LinkageError e) {
+        } catch (LinkageError _) {
             // a class for a container or a library that is not on the class path
         }
     }
@@ -129,7 +138,7 @@ public final class VaadinFeature implements Feature {
             RuntimeReflection.register(type.getDeclaredConstructors());
             RuntimeReflection.register(type.getDeclaredMethods());
             RuntimeReflection.register(type.getDeclaredFields());
-        } catch (LinkageError e) {
+        } catch (LinkageError _) {
             // a class that refers to a library that is not on the class path
         }
     }
