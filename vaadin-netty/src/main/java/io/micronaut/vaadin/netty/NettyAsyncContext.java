@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The asynchronous context of a request on Netty: the response is sent when {@link #complete()} is
@@ -54,7 +55,7 @@ final class NettyAsyncContext implements AsyncContext {
     private final CompletableFuture<Void> completion = new CompletableFuture<>();
     private final List<AsyncListener> listeners = new CopyOnWriteArrayList<>();
     private volatile long timeout = DEFAULT_TIMEOUT;
-    private volatile @Nullable ScheduledFuture<?> timeoutTask;
+    private final AtomicReference<@Nullable ScheduledFuture<?>> timeoutTask = new AtomicReference<>();
 
     NettyAsyncContext(NettyHttpServletRequest request,
                       NettyHttpServletResponse response,
@@ -73,7 +74,7 @@ final class NettyAsyncContext implements AsyncContext {
      */
     CompletableFuture<Void> whenComplete() {
         if (timeout > 0 && !completion.isDone()) {
-            timeoutTask = scheduler.schedule(Duration.ofMillis(timeout), this::timeout);
+            timeoutTask.set(scheduler.schedule(Duration.ofMillis(timeout), this::timeout));
         }
         return completion;
     }
@@ -113,7 +114,7 @@ final class NettyAsyncContext implements AsyncContext {
         if (completion.isDone()) {
             return;
         }
-        ScheduledFuture<?> task = timeoutTask;
+        ScheduledFuture<?> task = timeoutTask.get();
         if (task != null) {
             task.cancel(false);
         }
