@@ -21,7 +21,7 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     // the add-on's frontend needs a frontend build, with Node.js, which Vaadin may install
-    io.micronaut.build.internal.vaadin.NodeInstallService.serialize(this)
+    io.micronaut.vaadin.gradle.NodeInstallService.serialize(this)
     // development mode writes generated frontend files into the project: keep them under build/
     val projectDir = layout.buildDirectory.dir("vaadin-project")
     doFirst {
