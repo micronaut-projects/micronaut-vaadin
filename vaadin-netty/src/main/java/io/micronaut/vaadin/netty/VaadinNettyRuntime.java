@@ -58,6 +58,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -73,6 +74,7 @@ import java.util.concurrent.Executor;
 final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
+    private static final String UPLOAD_PREFIX = "vaadin-uploads-";
     private static final Logger LOG = LoggerFactory.getLogger(VaadinNettyRuntime.class);
     private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
     private static final String PATH_SEPARATOR = "/";
@@ -85,6 +87,7 @@ final class VaadinNettyRuntime {
     private final Executor executor;
     private final String prefix;
     private final AtmosphereFramework atmosphere;
+    private volatile @Nullable Path uploadDirectory;
 
     @SuppressWarnings("unchecked")
     VaadinNettyRuntime(ApplicationContext applicationContext,
@@ -174,29 +177,41 @@ final class VaadinNettyRuntime {
     }
 
     /**
-     * A file for the content of an uploaded part, which only the user running the application may read: the
-     * temporary directory is shared with the other users of the machine.
+     * The directory of the files of uploaded parts, which only the user running the application may read or write:
+     * the temporary directory is shared with the other users of the machine. Created on the first upload.
      */
-    private static Path createUploadFile() throws IOException {
-        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
-            return Files.createTempFile("vaadin-upload-", ".part", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+    private synchronized Path uploadDirectory() throws IOException {
+        Path directory = uploadDirectory;
+        if (directory == null || !Files.isDirectory(directory)) {
+            directory = createPrivateDirectory();
+            uploadDirectory = directory;
         }
-        Path file = Files.createTempFile("vaadin-upload-", ".part");
-        File plain = file.toFile();
-        if (!(plain.setReadable(false, false) && plain.setReadable(true, true)
-            && plain.setWritable(false, false) && plain.setWritable(true, true))) {
-            LOG.debug("Could not restrict the permissions of {}", file);
-        }
-        return file;
+        return directory;
     }
 
-    private static List<NettyPart> readParts(AsyncRequestBody body) {
+    private static Path createPrivateDirectory() throws IOException {
+        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+            return Files.createTempDirectory(UPLOAD_PREFIX, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+        }
+        // elsewhere, as on Windows, the temporary directory of the JVM is in the profile of the user
+        Path directory = Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), UPLOAD_PREFIX);
+        File plain = directory.toFile();
+        if (!(plain.setReadable(false, false) && plain.setReadable(true, true)
+            && plain.setWritable(false, false) && plain.setWritable(true, true)
+            && plain.setExecutable(false, false) && plain.setExecutable(true, true))) {
+            LOG.debug("Could not restrict the permissions of {}", directory);
+        }
+        return directory;
+    }
+
+    private List<NettyPart> readParts(AsyncRequestBody body) {
         List<NettyPart> parts = new ArrayList<>();
         try {
             body.parts().forEach(part -> {
                 Path file;
                 try {
-                    file = createUploadFile();
+                    // a new file, which the part creates
+                    file = uploadDirectory().resolve(UUID.randomUUID() + ".part");
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -289,6 +304,14 @@ final class VaadinNettyRuntime {
     @PreDestroy
     void destroy() {
         servlet.destroy();
+        Path directory = uploadDirectory;
+        if (directory != null) {
+            try {
+                Files.deleteIfExists(directory);
+            } catch (IOException e) {
+                LOG.debug("Cannot delete the directory of uploaded parts {}", directory, e);
+            }
+        }
     }
 
     private static String prefixOf(String mapping) {
