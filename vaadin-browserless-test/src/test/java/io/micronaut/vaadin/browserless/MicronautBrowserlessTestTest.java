@@ -36,8 +36,8 @@ class MicronautBrowserlessTestTest extends MicronautBrowserlessTest {
     @Test
     void uiScopedBeansLiveAsLongAsTheUI() {
         HelloView view = navigate(HelloView.class);
-        test($(Button.class).single()).click();
-        test($(Button.class).single()).click();
+        test(find(Button.class).single()).click();
+        test(find(Button.class).single()).click();
         assertEquals("2", view.getCount().getText());
         assertSame(view.getCounter(), getApplicationContext().getBean(UiCounter.class));
 
