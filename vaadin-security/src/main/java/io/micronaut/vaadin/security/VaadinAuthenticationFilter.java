@@ -120,8 +120,7 @@ final class VaadinAuthenticationFilter implements VaadinServletFilter {
     }
 
     private static HttpRequest<?> toMicronautRequest(HttpServletRequest request) {
-        String uri = request.getRequestURI() + (request.getQueryString() == null ? "" : "?" + request.getQueryString());
-        MutableHttpRequest<Object> micronautRequest = new SimpleHttpRequest<>(HttpMethod.parse(request.getMethod()), uri, null);
+        MutableHttpRequest<Object> micronautRequest = new SimpleHttpRequest<>(HttpMethod.parse(request.getMethod()), LocalUri.of(request.getRequestURI(), request.getQueryString()), null);
         for (String name : Collections.list(request.getHeaderNames())) {
             for (String value : Collections.list(request.getHeaders(name))) {
                 micronautRequest.getHeaders().add(name, value);
