@@ -273,6 +273,13 @@ final class VaadinNettyRuntime {
         return WebSocketProcessorFactory.getDefault().getWebSocketProcessor(atmosphere);
     }
 
+    /**
+     * @return The servlet WebSocket container, where Vaadin registers its endpoints
+     */
+    NettyServerContainer serverContainer() {
+        return servletContext.getServerContainer();
+    }
+
     @PreDestroy
     void destroy() {
         servlet.destroy();

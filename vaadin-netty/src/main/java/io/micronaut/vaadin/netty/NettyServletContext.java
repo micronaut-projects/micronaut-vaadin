@@ -27,6 +27,7 @@ import jakarta.servlet.ServletRegistration;
 import jakarta.servlet.SessionCookieConfig;
 import jakarta.servlet.SessionTrackingMode;
 import jakarta.servlet.descriptor.JspConfigDescriptor;
+import jakarta.websocket.server.ServerContainer;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,11 +62,21 @@ final class NettyServletContext implements ServletContext {
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private final Map<String, String> initParameters = new ConcurrentHashMap<>();
     private final List<ServletContextListener> contextListeners = new CopyOnWriteArrayList<>();
+    private final NettyServerContainer serverContainer = new NettyServerContainer();
     private int sessionTimeout;
 
     NettyServletContext(ClassLoader classLoader, NettyServletRegistration registration) {
         this.classLoader = classLoader;
         this.registration = registration;
+        // Vaadin looks the servlet WebSocket container up under the name of its type
+        attributes.put(ServerContainer.class.getName(), serverContainer);
+    }
+
+    /**
+     * @return The servlet WebSocket container, where Vaadin registers its endpoints
+     */
+    NettyServerContainer getServerContainer() {
+        return serverContainer;
     }
 
     NettyServletRegistration getRegistration() {
