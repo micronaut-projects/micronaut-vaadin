@@ -81,6 +81,8 @@ playwright = { module = "com.microsoft.playwright:playwright", version = "1.63.0
 jetty-ee10-websocket-jakarta-server = { module = "org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server", version.ref = "jetty" }
 tomcat-embed-websocket = { module = "org.apache.tomcat.embed:tomcat-embed-websocket", version.ref = "tomcat" }
 undertow-websockets-jsr = { module = "io.undertow:undertow-websockets-jsr", version.ref = "undertow" }
+jakarta-websocket-api = { module = "jakarta.websocket:jakarta.websocket-api", version = "2.2.0" }
+jakarta-websocket-client-api = { module = "jakarta.websocket:jakarta.websocket-client-api", version = "2.2.0" }
 
 [bundles]
 
