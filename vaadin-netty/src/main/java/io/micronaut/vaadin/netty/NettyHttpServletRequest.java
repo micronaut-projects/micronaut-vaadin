@@ -53,6 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -98,9 +99,17 @@ final class NettyHttpServletRequest implements HttpServletRequest {
     @Override
     public Cookie @Nullable [] getCookies() {
         List<Cookie> cookies = request.getCookies().getAll().stream()
-            .map(cookie -> new Cookie(cookie.getName(), cookie.getValue()))
+            .map(NettyHttpServletRequest::servletCookie)
             .toList();
         return cookies.isEmpty() ? null : cookies.toArray(Cookie[]::new);
+    }
+
+    private static Cookie servletCookie(io.micronaut.http.cookie.Cookie cookie) {
+        Cookie servletCookie = new Cookie(cookie.getName(), cookie.getValue());
+        // what the browser sent: a request cookie keeps its attributes, the secure flag among them
+        servletCookie.setSecure(cookie.isSecure());
+        servletCookie.setHttpOnly(cookie.isHttpOnly());
+        return servletCookie;
     }
 
     @Override
@@ -209,11 +218,7 @@ final class NettyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public HttpSession getSession() {
-        HttpSession httpSession = getSession(true);
-        if (httpSession == null) {
-            throw new IllegalStateException("No session");
-        }
-        return httpSession;
+        return Objects.requireNonNull(getSession(true), "No session");
     }
 
     @Override
