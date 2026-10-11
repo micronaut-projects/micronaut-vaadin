@@ -5,6 +5,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
@@ -57,8 +58,8 @@ class RootMappingTest {
 
     @Test
     void unknownPathsGoToVaadin() {
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve("/missing"));
+        BlockingHttpClient blocking = client.toBlocking();
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve("/missing"));
         assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
         String body = e.getResponse().getBody(String.class).orElse("");
         assertTrue(body.contains("Could not navigate"), body);
@@ -66,8 +67,8 @@ class RootMappingTest {
 
     @Test
     void excludedPathsStayWithMicronaut() {
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve("/excluded/page"));
+        BlockingHttpClient blocking = client.toBlocking();
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve("/excluded/page"));
         assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
     }
 }
