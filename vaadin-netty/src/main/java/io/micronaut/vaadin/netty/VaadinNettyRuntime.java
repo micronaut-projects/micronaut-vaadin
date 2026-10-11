@@ -75,7 +75,8 @@ final class VaadinNettyRuntime {
     static final String SERVLET_NAME = "vaadinServlet";
     private static final Logger LOG = LoggerFactory.getLogger(VaadinNettyRuntime.class);
     private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
-    private static final String VAADIN_PATH = "/" + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
+    private static final String PATH_SEPARATOR = "/";
+    private static final String VAADIN_PATH = PATH_SEPARATOR + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
 
     private final NettyServletContext servletContext;
     private final NettyVaadinServlet servlet;
@@ -130,7 +131,7 @@ final class VaadinNettyRuntime {
      * @param body    Its body
      * @return The response
      */
-    CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, AsyncRequestBody body) {
+    CompletionStage<HttpResponse<byte[]>> service(HttpRequest<?> request, AsyncRequestBody body) {
         if (isMultipart(request)) {
             // uploads: the parts are read into temporary files, which Vaadin reads through getParts()
             List<NettyPart> parts = readParts(body);
@@ -144,7 +145,7 @@ final class VaadinNettyRuntime {
         }
     }
 
-    private CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, InputStream in, @Nullable List<NettyPart> parts) {
+    private CompletionStage<HttpResponse<byte[]>> service(HttpRequest<?> request, InputStream in, @Nullable List<NettyPart> parts) {
         String path = request.getPath();
         NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath(path), pathInfo(path));
         if (parts != null) {
@@ -161,9 +162,9 @@ final class VaadinNettyRuntime {
         }
         NettyAsyncContext asyncContext = servletRequest.asyncContext();
         if (asyncContext == null) {
-            return CompletableFuture.completedFuture(servletResponse.toHttpResponse());
+            return CompletableFuture.<HttpResponse<byte[]>>completedFuture(servletResponse.toHttpResponse());
         }
-        return asyncContext.whenComplete().thenApply(done -> servletResponse.toHttpResponse());
+        return asyncContext.whenComplete().<HttpResponse<byte[]>>thenApply(done -> servletResponse.toHttpResponse());
     }
 
     private static boolean isMultipart(HttpRequest<?> request) {
@@ -269,7 +270,7 @@ final class VaadinNettyRuntime {
         if (prefix.isEmpty()) {
             return "";
         }
-        if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+        if (path.equals(prefix) || path.startsWith(prefix + PATH_SEPARATOR)) {
             return prefix;
         }
         // the frontend resources of Vaadin, under /VAADIN whatever the mapping of the views
@@ -291,10 +292,10 @@ final class VaadinNettyRuntime {
     }
 
     private static String prefixOf(String mapping) {
-        if ("/*".equals(mapping) || "/".equals(mapping)) {
+        if ("/*".equals(mapping) || PATH_SEPARATOR.equals(mapping)) {
             return "";
         }
-        if (!mapping.startsWith("/") || !mapping.endsWith("/*")) {
+        if (!mapping.startsWith(PATH_SEPARATOR) || !mapping.endsWith("/*")) {
             throw new IllegalArgumentException("vaadin.url-mapping must be /* or a path ending with /*, such as /ui/*: " + mapping);
         }
         return mapping.substring(0, mapping.length() - 2);

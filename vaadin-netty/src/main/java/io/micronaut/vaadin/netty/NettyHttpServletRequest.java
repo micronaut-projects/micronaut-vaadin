@@ -404,7 +404,8 @@ final class NettyHttpServletRequest implements HttpServletRequest {
 
     @Override
     public String getServerName() {
-        return request.getServerName();
+        String name = request.getServerName();
+        return name == null ? request.getServerAddress().getHostString() : name;
     }
 
     @Override
