@@ -1,0 +1,24 @@
+In production mode, Vaadin serves a frontend bundle built ahead of time, and no development server runs. Build it with Vaadin's Gradle or Maven plugin, as in any Vaadin application.
+
+With Gradle, apply Vaadin's plugin next to Micronaut's:
+
+[source,kotlin]
+----
+plugins {
+    id("io.micronaut.application") version "..."
+    id("com.vaadin") version "25.3.1"
+}
+
+vaadin {
+    productionMode = true // <1>
+}
+----
+<1> Or pass `-Pvaadin.productionMode` to the build of a production artifact, and leave development builds in development mode
+
+The plugin builds the bundle, and writes it with a `flow-build-info.json` file that turns production mode on into the jar of the application. Run the application from its jar, or from an image or a distribution built from it: running it from its classes, as `./gradlew run` does, leaves the bundle out, and Vaadin starts in development mode.
+
+With Maven, add the `prepare-frontend` and `build-frontend` goals of `com.vaadin:vaadin-maven-plugin` to a `production` profile, and build the application with it.
+
+Leave `com.vaadin:vaadin-dev` out of production builds: see <<devMode, Development Mode>>.
+
+The bundle is built with Node.js, which the plugins download when it is not installed.
