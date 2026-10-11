@@ -310,8 +310,7 @@ final class NettyServletContext implements ServletContext {
         ServletContextEvent event = new ServletContextEvent(this);
         List<ServletContextListener> listeners = new ArrayList<>(contextListeners);
         contextListeners.clear();
-        Collections.reverse(listeners);
-        for (ServletContextListener listener : listeners) {
+        for (ServletContextListener listener : listeners.reversed()) {
             try {
                 listener.contextDestroyed(event);
             } catch (RuntimeException e) {
