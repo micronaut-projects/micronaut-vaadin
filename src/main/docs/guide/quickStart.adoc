@@ -1,6 +1,10 @@
-Add the Micronaut Vaadin dependency to your build:
+Add the Micronaut Vaadin dependency to your build, with its annotation processor:
 
 dependency:io.micronaut.vaadin:micronaut-vaadin-core[]
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-processor[scope="annotationProcessor"]
+
+The processor makes the classes Vaadin creates, such as views, into beans, and lets the application start Vaadin without scanning the classpath. See <<views, Views and Dependency Injection>>.
 
 The integration is configured under the `vaadin` prefix. The property names match those of Vaadin's Spring Boot integration, so the Vaadin documentation applies unchanged:
 
@@ -12,6 +16,8 @@ vaadin:
     - /api/**
     - /health
 ----
+
+Any other Vaadin initialization parameter can be set under the same prefix. For example, `vaadin.heartbeat-interval` sets `heartbeatInterval`.
 
 The configuration is available as a bean:
 

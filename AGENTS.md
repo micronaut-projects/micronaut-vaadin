@@ -5,21 +5,23 @@ Micronaut Vaadin integrates Vaadin Flow 25 with Micronaut 5.3, on the Netty serv
 ## Repository Shape
 
 - `vaadin-core/` is the transport-neutral core, published as `micronaut-vaadin-core` (`useStandardizedProjectNames`).
-- `vaadin-bom/` is the BOM. It imports `com.vaadin:vaadin-bom`.
+- `vaadin-processor/` makes the classes Vaadin instantiates into beans; their definitions are the type index that replaces classpath scanning.
+- `vaadin-browserless-test/` provides `MicronautBrowserlessTest`, on Vaadin's browserless test library.
+- `vaadin-bom/` is the BOM. It imports Vaadin's `flow-bom`, `flow-components-bom` and `browserless-test-bom`, not the platform `vaadin-bom`, which also imports the Spring, Hilla and commercial TestBench BOMs.
 - `buildSrc/src/main/groovy/io.micronaut.build.internal.vaadin-*.gradle` holds the convention plugins: `vaadin-base`, `vaadin-module` for published modules, and `vaadin-tests` for the documentation suites.
 - `test-suite`, `test-suite-kotlin`, `test-suite-groovy` and `test-suite-python` hold the guide samples in Java, Kotlin (KSP), Groovy and Python. Scala is intentionally excluded.
 - `.agents/skills/` is shared agent guidance synced from the template.
 
 ## Versions
 
-- Micronaut core is `5.3.0-SNAPSHOT`, from the Central snapshots repository (`addSnapshotRepository()` in `settings.gradle`). Move to the 5.3.0 release when it ships.
-- Vaadin is 25 only (`managed-vaadin` in `gradle/libs.versions.toml`).
+- Micronaut core is `5.3.0-SNAPSHOT`, from the Central snapshots repository. micronaut-build adds Maven Central to each project, which hides the settings repositories, so the snapshots repository is also declared in the `vaadin-base` convention and the root `build.gradle`. Remove all three when 5.3.0 ships.
+- Vaadin is 25 only: `managed-vaadin-flow` and `managed-vaadin-flow-components` in `gradle/libs.versions.toml` follow the Flow versions of a platform release (`vaadin`, used only for the free `vaadin-core` components in tests).
 
 ## Documentation
 
 - User guide sources live in `src/main/docs/guide`, with navigation in `toc.yml`.
 - Every sample is a `snippet::` with the same fully qualified name in each test suite. Python sources drop the leading `io` package: `io.micronaut.vaadin.docs.X` lives in `test-suite-python/src/test/python/micronaut/vaadin/docs/X.py`.
-- Python view samples are an open experiment. Until it succeeds, view samples use `languages="java,kotlin,groovy"`.
+- Python cannot yet compile classes extending Vaadin components (two Pyronaut bugs), so view samples use `languages="java,kotlin,groovy"`; other samples have a Python tab.
 - Build the guide with `./gradlew publishGuide`.
 
 ## Verification

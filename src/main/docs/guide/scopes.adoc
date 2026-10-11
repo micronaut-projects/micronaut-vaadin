@@ -1,0 +1,39 @@
+Besides the scopes of Micronaut, a bean can live as long as a part of the Vaadin user interface:
+
+[cols="1,3"]
+|===
+|Annotation |Lifecycle
+
+|link:{api}/io/micronaut/vaadin/annotation/UIScope.html[@UIScope]
+|One instance per browser window or tab, destroyed when the UI closes
+
+|link:{api}/io/micronaut/vaadin/annotation/VaadinSessionScope.html[@VaadinSessionScope]
+|One instance per user session, destroyed when the session ends
+
+|link:{api}/io/micronaut/vaadin/annotation/RouteScope.html[@RouteScope]
+|One instance per navigation target: the bean is destroyed when the view that owns it is left
+|===
+
+snippet::io.micronaut.vaadin.docs.views.VisitCounter[tags="counter", indent=0, title="A UI-scoped bean"]
+
+<1> Every view of the same browser tab receives the same counter.
+
+The beans of these scopes can only be resolved while Vaadin processes a request, when `UI.getCurrent()` is set. Inject them into views and other beans that Vaadin creates.
+
+A `@RouteScope` bean belongs to the navigation target that was current when it was created. To share it between the views below a layout, name the layout with `@RouteScopeOwner`, on the bean and where it is injected:
+
+[source,java]
+----
+@RouteScope
+@RouteScopeOwner(MainLayout.class)
+public class Wizard {
+}
+
+@Route(value = "step-one", layout = MainLayout.class)
+public class StepOne extends Div {
+    public StepOne(@RouteScopeOwner(MainLayout.class) Wizard wizard) {
+    }
+}
+----
+
+The bean lives as long as `MainLayout` stays in the navigation chain.

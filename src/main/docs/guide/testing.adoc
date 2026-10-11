@@ -1,0 +1,12 @@
+Vaadin's browserless testing drives views on the server, with no browser. Micronaut Vaadin adds a base class for tests that run with `@MicronautTest`:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-browserless-test[scope="test"]
+
+snippet::io.micronaut.vaadin.docs.views.GreetingViewTest[tags="test", indent=0, title="Testing a view", languages="java,kotlin,groovy"]
+
+<1> `@MicronautTest` starts the application context of the test.
+<2> `MicronautBrowserlessTest` sets up a mock Vaadin environment, using the views the application knows at compile time.
+<3> Navigation creates the view through the application context, with its dependencies.
+<4> Scoped beans, here a UI-scoped one, behave as in the running application.
+
+The views, components and testers are those of the `com.vaadin:browserless-test` library: see the https://vaadin.com/docs/latest/flow/testing/browserless[Vaadin documentation].

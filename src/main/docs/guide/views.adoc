@@ -1,0 +1,48 @@
+Vaadin creates the views of an application, its layouts and error views. With Micronaut Vaadin, it creates them through the application context, so they receive dependency injection like any other bean.
+
+The annotation processor makes the following classes beans, with no annotation needed besides Vaadin's own:
+
+* views, annotated with `@Route`
+* automatic layouts, annotated with `@Layout`
+* error views, implementing `HasErrorParameter`
+* the application shell, implementing `AppShellConfigurator`
+* web component exporters, extending `WebComponentExporter`
+
+These beans also tell the application which Vaadin types it has, so Vaadin starts without scanning the classpath.
+
+A view receives its dependencies through its constructor:
+
+snippet::io.micronaut.vaadin.docs.views.GreetingService[tags="service", indent=0, title="A service"]
+
+snippet::io.micronaut.vaadin.docs.views.GreetingView[tags="view", indent=0, title="A view", languages="java,kotlin,groovy"]
+
+<1> `@Route` makes the view a bean. Each navigation to the view creates an instance.
+<2> The constructor receives the beans the view needs, here a singleton service and a <<scopes, UI-scoped>> counter.
+
+NOTE: Views written in Python are not supported yet: Pyronaut cannot yet compile a Python class extending a Vaadin component. The other samples of this guide are available in Python.
+
+=== Vaadin services as beans
+
+Vaadin looks up several services through its `Lookup` and `Instantiator`. A bean implementing one of these types replaces Vaadin's default:
+
+[cols="1,2"]
+|===
+|Type |Purpose
+
+|`I18NProvider`
+|Translations
+
+|`MenuAccessControl`
+|Access control of the menu entries
+
+|`PageTitleGenerator`
+|Page titles
+
+|`VaadinServiceInitListener`
+|Called when the Vaadin service starts. The `ServiceInitEvent` is also published as an application event, so an `@EventListener` method can receive it.
+
+|`UIInitListener`
+|Called for each new UI
+|===
+
+Vaadin runs its background tasks on the executor named `vaadin` when one is configured, for example with `micronaut.executors.vaadin`. Without it, Vaadin uses its own.

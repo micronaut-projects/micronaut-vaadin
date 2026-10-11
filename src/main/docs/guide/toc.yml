@@ -2,5 +2,11 @@ introduction:
   title: Introduction
 quickStart:
   title: Quick Start
+views:
+  title: Views and Dependency Injection
+scopes:
+  title: Vaadin Scopes
+testing:
+  title: Testing
 repository: Repository
 releaseHistory: Release History
