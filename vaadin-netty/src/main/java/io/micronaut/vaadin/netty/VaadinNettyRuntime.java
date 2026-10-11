@@ -66,7 +66,8 @@ final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
     private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
-    private static final String VAADIN_PATH = "/" + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
+    private static final String PATH_SEPARATOR = "/";
+    private static final String VAADIN_PATH = PATH_SEPARATOR + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
 
     private final NettyServletContext servletContext;
     private final NettyVaadinServlet servlet;
@@ -121,7 +122,7 @@ final class VaadinNettyRuntime {
      * @param body    Its body
      * @return The response
      */
-    CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, AsyncRequestBody body) {
+    CompletionStage<HttpResponse<byte[]>> service(HttpRequest<?> request, AsyncRequestBody body) {
         String path = request.getPath();
         String servletPath = servletPath(path);
         @Nullable String pathInfo = pathInfo(path);
@@ -132,9 +133,9 @@ final class VaadinNettyRuntime {
             servlet.service(servletRequest, servletResponse);
             NettyAsyncContext asyncContext = servletRequest.asyncContext();
             if (asyncContext == null) {
-                return CompletableFuture.completedFuture(servletResponse.toHttpResponse());
+                return CompletableFuture.<HttpResponse<byte[]>>completedFuture(servletResponse.toHttpResponse());
             }
-            return asyncContext.whenComplete().thenApply(done -> servletResponse.toHttpResponse());
+            return asyncContext.whenComplete().<HttpResponse<byte[]>>thenApply(done -> servletResponse.toHttpResponse());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ServletException e) {
@@ -191,7 +192,7 @@ final class VaadinNettyRuntime {
         if (prefix.isEmpty()) {
             return "";
         }
-        if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+        if (path.equals(prefix) || path.startsWith(prefix + PATH_SEPARATOR)) {
             return prefix;
         }
         // the frontend resources of Vaadin, under /VAADIN whatever the mapping of the views
@@ -213,10 +214,10 @@ final class VaadinNettyRuntime {
     }
 
     private static String prefixOf(String mapping) {
-        if ("/*".equals(mapping) || "/".equals(mapping)) {
+        if ("/*".equals(mapping) || PATH_SEPARATOR.equals(mapping)) {
             return "";
         }
-        if (!mapping.startsWith("/") || !mapping.endsWith("/*")) {
+        if (!mapping.startsWith(PATH_SEPARATOR) || !mapping.endsWith("/*")) {
             throw new IllegalArgumentException("vaadin.url-mapping must be /* or a path ending with /*, such as /ui/*: " + mapping);
         }
         return mapping.substring(0, mapping.length() - 2);
