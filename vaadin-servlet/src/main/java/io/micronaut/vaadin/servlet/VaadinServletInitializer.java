@@ -61,6 +61,8 @@ public class VaadinServletInitializer implements ServletContainerInitializer {
      */
     public static final String ROOT_MAPPING_SERVLET_PATH = "/vaadinServlet/*";
 
+    private static final String PATH_SEPARATOR = "/";
+
     private final ApplicationContext applicationContext;
     private final VaadinConfigurationProperties configuration;
     private final VaadinStartup startup;
@@ -92,11 +94,11 @@ public class VaadinServletInitializer implements ServletContainerInitializer {
         if (rootMapping) {
             registration.addMapping(ROOT_MAPPING_SERVLET_PATH);
             registration.setInitParameter(VaadinServlet.INTERNAL_VAADIN_SERVLET_VITE_DEV_MODE_FRONTEND_PATH, "");
-            pushPath = "/" + Constants.PUSH_MAPPING;
+            pushPath = PATH_SEPARATOR + Constants.PUSH_MAPPING;
         } else {
             // the frontend resources live under /VAADIN whatever the mapping of the views
-            registration.addMapping(mapping, "/" + Constants.VAADIN_MAPPING + "*");
-            pushPath = mapping.substring(0, mapping.length() - 2) + "/" + Constants.PUSH_MAPPING;
+            registration.addMapping(mapping, PATH_SEPARATOR + Constants.VAADIN_MAPPING + "*");
+            pushPath = mapping.substring(0, mapping.length() - 2) + PATH_SEPARATOR + Constants.PUSH_MAPPING;
         }
         registration.setInitParameter(ApplicationConfig.JSR356_MAPPING_PATH, pushPath);
 
