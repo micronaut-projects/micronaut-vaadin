@@ -47,11 +47,14 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -169,13 +172,30 @@ final class VaadinNettyRuntime {
             .orElse(false);
     }
 
+    /**
+     * A file for the content of an uploaded part, which only the user running the application may read: the
+     * temporary directory is shared with the other users of the machine.
+     */
+    private static Path createUploadFile() throws IOException {
+        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+            return Files.createTempFile("vaadin-upload-", ".part", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------")));
+        }
+        Path file = Files.createTempFile("vaadin-upload-", ".part");
+        File plain = file.toFile();
+        if (!(plain.setReadable(false, false) && plain.setReadable(true, true)
+            && plain.setWritable(false, false) && plain.setWritable(true, true))) {
+            LOG.debug("Could not restrict the permissions of {}", file);
+        }
+        return file;
+    }
+
     private static List<NettyPart> readParts(AsyncRequestBody body) {
         List<NettyPart> parts = new ArrayList<>();
         try {
             body.parts().forEach(part -> {
                 Path file;
                 try {
-                    file = Files.createTempFile("vaadin-upload-", ".part");
+                    file = createUploadFile();
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
