@@ -1,0 +1,35 @@
+Vaadin's development mode adds the development tools to the page, reloads the browser when the frontend changes, and builds the frontend on the fly when the application needs it. It starts when Vaadin's development server is on the classpath and production mode is off.
+
+Add it for development only. With Gradle:
+
+[source,groovy]
+----
+dependencies {
+    developmentOnly("com.vaadin:vaadin-dev")
+}
+----
+
+With Maven, add `com.vaadin:vaadin-dev` in a profile that production builds leave out.
+
+While the application uses only Vaadin's own components, Vaadin serves its pre-built development bundle and no Node.js installation is needed. Custom frontend code, themes or add-ons with frontend dependencies make Vaadin build the bundle, which needs Node.js.
+
+Vaadin starts development mode with the views and other Vaadin types known at compile time, so it finds the frontend dependencies of the application without scanning the classpath.
+
+=== Project folders
+
+Development mode reads the frontend sources of the project and writes generated files into it. Vaadin's Gradle and Maven plugins tell it where the project and its build folder are. Without them, set the folders in the configuration:
+
+[configuration]
+----
+vaadin:
+  project:
+    basedir: /path/to/project
+  build:
+    folder: build
+----
+
+`vaadin.build.folder` defaults to Maven's `target`.
+
+=== Production mode
+
+Set `vaadin.production-mode` to `true`, or build with the production profile of Vaadin's plugin, which also builds the production frontend bundle. Leave `com.vaadin:vaadin-dev` out of production builds.

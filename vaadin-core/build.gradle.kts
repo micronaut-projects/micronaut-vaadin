@@ -10,6 +10,8 @@ dependencies {
     api(libs.vaadin.flow.server)
     // Vaadin declares the servlet API as provided: the Netty runtime has no servlet container to provide it
     api(mnServlet.servlet.api)
+    // Development mode, used when the application has vaadin-dev-server on its classpath
+    compileOnly(libs.vaadin.dev.server)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)
