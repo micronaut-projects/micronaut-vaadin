@@ -117,6 +117,6 @@ The views can also read the user from the request: `VaadinRequest.getCurrent().g
 === How users are authenticated
 
 * On the Netty server, Micronaut Security authenticates Vaadin's requests like any other request, with every authentication mechanism it supports. Vaadin's routes let every request through Micronaut Security's rules: Vaadin checks the access to its views itself.
-* On a servlet container, Vaadin's requests do not pass through Micronaut's filters, so the integration authenticates them with the authentication fetchers of Micronaut Security. The fetchers see the method, URI, headers and cookies of each request, which suits stateless authentication: HTTP Basic, or a token in a cookie or a header.
+* On a servlet container, Vaadin's requests do not pass through Micronaut's filters, so the integration authenticates them with the authentication fetchers of Micronaut Security. The fetchers see the method, URI, headers and cookies of each request, and its Micronaut session when Micronaut Session is present: HTTP Basic, a token in a cookie or a header, and an authentication kept in the session, with `micronaut.security.authentication: session`, all work.
 
 Micronaut Security keeps protecting the controllers of the application as usual.
