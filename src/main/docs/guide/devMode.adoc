@@ -13,7 +13,7 @@ With Maven, add `com.vaadin:vaadin-dev` in a profile that production builds leav
 
 While the application uses only Vaadin's own components, Vaadin serves its pre-built development bundle and no Node.js installation is needed. Custom frontend code, themes or add-ons with frontend dependencies make Vaadin build the bundle, which needs Node.js.
 
-Vaadin starts development mode with the views and other Vaadin types known at compile time, so it finds the frontend dependencies of the application without scanning the classpath.
+Vaadin starts development mode with the views and other Vaadin types known at compile time, so it finds the frontend dependencies of the application without scanning the classpath. It follows the classes those views use, as a production build does, so the components of add-ons, with their frontend modules and npm packages, are found too: an add-on with frontend code of its own makes Vaadin build a development bundle, with Node.js, the first time. Set `vaadin.devmode.optimize-bundle` to `false` to have Vaadin take only the classes it is given instead.
 
 === Live updates of the frontend
 
