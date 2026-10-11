@@ -1,0 +1,34 @@
+Micronaut Vaadin runs on the servlet containers of https://micronaut-projects.github.io/micronaut-servlet/latest/guide/[Micronaut Servlet]: Jetty, Tomcat and Undertow. Add the servlet integration and a container:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-servlet[]
+
+dependency:io.micronaut.servlet:micronaut-http-server-jetty[]
+
+The Vaadin servlet is registered with the container, and Vaadin starts with the views known at compile time: the container does not scan the classpath.
+
+=== URL mapping
+
+By default, `vaadin.url-mapping` is `/*` and Vaadin serves the root of the application, next to your controllers. A request goes to Micronaut when one of its routes or static resources matches it, or when its path matches one of the `vaadin.exclude-urls` patterns. Every other request goes to Vaadin.
+
+[configuration]
+----
+vaadin:
+  exclude-urls:
+    - /health/**
+----
+
+To keep Vaadin under a prefix instead, set the mapping. The rest of the application then belongs to Micronaut:
+
+[configuration]
+----
+vaadin:
+  url-mapping: /ui/*
+----
+
+=== Sessions
+
+Vaadin keeps its state in the HTTP session of the container. Micronaut Servlet creates the Jetty context without sessions, so the integration enables them; Tomcat and Undertow have sessions by default. A Vaadin application with several instances needs sticky sessions.
+
+=== Production builds
+
+In production mode, Vaadin serves the frontend bundle built by its Gradle or Maven plugin. Apply the plugin to the application and run its `build-frontend` step for production builds, as with any Vaadin application.
