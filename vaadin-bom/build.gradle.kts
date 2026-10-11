@@ -1,6 +1,6 @@
 plugins {
-    id 'io.micronaut.build.internal.vaadin-base'
-    id "io.micronaut.build.internal.bom"
+    id("io.micronaut.build.internal.vaadin-base")
+    id("io.micronaut.build.internal.bom")
 }
 
 micronautBuild {

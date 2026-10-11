@@ -16,7 +16,6 @@
 package io.micronaut.vaadin;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.core.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +62,7 @@ public class VaadinConfigurationProperties {
     /**
      * @return The URL mapping of the Vaadin servlet
      */
-    public @NonNull String getUrlMapping() {
+    public String getUrlMapping() {
         return urlMapping;
     }
 
@@ -72,7 +71,7 @@ public class VaadinConfigurationProperties {
      *
      * @param urlMapping The URL mapping
      */
-    public void setUrlMapping(@NonNull String urlMapping) {
+    public void setUrlMapping(String urlMapping) {
         this.urlMapping = urlMapping;
     }
 
@@ -111,7 +110,7 @@ public class VaadinConfigurationProperties {
     /**
      * @return The packages searched for Vaadin types
      */
-    public @NonNull List<String> getAllowedPackages() {
+    public List<String> getAllowedPackages() {
         return allowedPackages;
     }
 
@@ -120,14 +119,14 @@ public class VaadinConfigurationProperties {
      *
      * @param allowedPackages The allowed packages
      */
-    public void setAllowedPackages(@NonNull List<String> allowedPackages) {
+    public void setAllowedPackages(List<String> allowedPackages) {
         this.allowedPackages = allowedPackages;
     }
 
     /**
      * @return The packages never searched for Vaadin types
      */
-    public @NonNull List<String> getBlockedPackages() {
+    public List<String> getBlockedPackages() {
         return blockedPackages;
     }
 
@@ -136,14 +135,14 @@ public class VaadinConfigurationProperties {
      *
      * @param blockedPackages The blocked packages
      */
-    public void setBlockedPackages(@NonNull List<String> blockedPackages) {
+    public void setBlockedPackages(List<String> blockedPackages) {
         this.blockedPackages = blockedPackages;
     }
 
     /**
      * @return The URL patterns that Vaadin does not handle
      */
-    public @NonNull List<String> getExcludeUrls() {
+    public List<String> getExcludeUrls() {
         return excludeUrls;
     }
 
@@ -152,7 +151,7 @@ public class VaadinConfigurationProperties {
      *
      * @param excludeUrls The excluded URL patterns
      */
-    public void setExcludeUrls(@NonNull List<String> excludeUrls) {
+    public void setExcludeUrls(List<String> excludeUrls) {
         this.excludeUrls = excludeUrls;
     }
 }

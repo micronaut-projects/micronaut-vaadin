@@ -1,6 +1,6 @@
 plugins {
-    id 'groovy'
-    id 'io.micronaut.build.internal.vaadin-tests'
+    id("groovy")
+    id("io.micronaut.build.internal.vaadin-tests")
 }
 
 dependencies {

@@ -1,0 +1,2 @@
+io.micronaut.vaadin.processor.RouteAnnotationMapper
+io.micronaut.vaadin.processor.LayoutAnnotationMapper

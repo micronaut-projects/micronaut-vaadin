@@ -1,10 +1,10 @@
 plugins {
-    id 'io.micronaut.build.internal.kotlin-ksp'
-    id 'io.micronaut.build.internal.vaadin-tests'
+    id("java-library")
+    id("io.micronaut.build.internal.vaadin-tests")
 }
 
 dependencies {
-    kspTest(mn.micronaut.inject.kotlin)
+    testAnnotationProcessor(mn.micronaut.inject.java)
     testImplementation(projects.micronautVaadinCore)
     testImplementation(mnTest.micronaut.test.junit5)
     testRuntimeOnly(mnLogging.logback.classic)
