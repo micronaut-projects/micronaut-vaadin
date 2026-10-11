@@ -1,0 +1,54 @@
+Micronaut Vaadin controls the access to views with https://micronaut-projects.github.io/micronaut-security/latest/guide/[Micronaut Security]: the users and their roles come from Micronaut Security, and Vaadin checks them against the annotations of each view. Add the security integration:
+
+dependency:io.micronaut.vaadin:micronaut-vaadin-security[]
+
+=== Access to views
+
+Annotate each view with who may see it. A view without an annotation is denied to everyone.
+
+[cols="1,2"]
+|===
+|Annotation |Who may see the view
+
+|`@AnonymousAllowed` (`com.vaadin.flow.server.auth`)
+|Everyone, signed in or not
+
+|`@PermitAll` (`jakarta.annotation.security`)
+|Every authenticated user
+
+|`@RolesAllowed("ADMIN")` (`jakarta.annotation.security`)
+|The authenticated users with one of the roles
+
+|`@DenyAll` (`jakarta.annotation.security`)
+|Nobody
+|===
+
+[source,java]
+----
+@Route("admin")
+@RolesAllowed("ADMIN")
+public class AdminView extends VerticalLayout {
+}
+----
+
+An anonymous user who opens a view that needs authentication is taken to the login view, when one is configured. A signed-in user without the required role gets an access denied error, which production mode reports as a view that does not exist.
+
+[configuration]
+----
+vaadin:
+  security:
+    login-view: /login
+----
+
+Set `vaadin.security.enabled` to `false` to turn the access control off. To change how views are checked, define a `NavigationAccessControl` bean, or add checks with `NavigationAccessChecker` beans.
+
+=== The current user
+
+Views see the user through the request, for example `VaadinRequest.getCurrent().getUserPrincipal()`: it is the `Authentication` of Micronaut Security, with the name and the roles of the user.
+
+=== How users are authenticated
+
+* On the Netty server, Micronaut Security authenticates Vaadin's requests like any other request, with every authentication mechanism it supports. Vaadin's routes let every request through Micronaut Security's rules: Vaadin checks the access to its views itself.
+* On a servlet container, Vaadin's requests do not pass through Micronaut's filters, so the integration authenticates them with the authentication fetchers of Micronaut Security. The fetchers see the method, URI, headers and cookies of each request, which suits stateless authentication: HTTP Basic, or a token in a cookie or a header.
+
+Micronaut Security keeps protecting the controllers of the application as usual.

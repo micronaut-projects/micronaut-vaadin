@@ -12,6 +12,8 @@ servletRuntime:
   title: Running on a Servlet Container
 devMode:
   title: Development Mode
+security:
+  title: Security
 testing:
   title: Testing
 repository: Repository
