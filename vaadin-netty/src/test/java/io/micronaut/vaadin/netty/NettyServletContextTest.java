@@ -104,7 +104,8 @@ class NettyServletContextTest {
         assertThrows(UnsupportedOperationException.class, () -> context.addServlet("other", "x.Y"));
         assertThrows(UnsupportedOperationException.class, () -> context.addFilter("filter", "x.Y"));
         assertThrows(UnsupportedOperationException.class, () -> context.addListener("x.Y"));
-        assertThrows(UnsupportedOperationException.class, () -> context.setSessionTrackingModes(Set.of(SessionTrackingMode.URL)));
+        Set<SessionTrackingMode> urlTracking = Set.of(SessionTrackingMode.URL);
+        assertThrows(UnsupportedOperationException.class, () -> context.setSessionTrackingModes(urlTracking));
         assertThrows(UnsupportedOperationException.class, () -> context.addJspFile("jsp", "x.jsp"));
         assertThrows(UnsupportedOperationException.class, () -> context.setRequestCharacterEncoding("UTF-8"));
         assertThrows(UnsupportedOperationException.class, () -> context.setResponseCharacterEncoding("UTF-8"));
