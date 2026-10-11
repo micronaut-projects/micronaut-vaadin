@@ -21,6 +21,8 @@ import jakarta.servlet.FilterRegistration;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.Servlet;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.ServletRegistration;
 import jakarta.servlet.SessionCookieConfig;
 import jakarta.servlet.SessionTrackingMode;
@@ -31,12 +33,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.EventListener;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The servlet context of Vaadin on Netty: holds Vaadin's attributes, and serves the web resources of the
@@ -55,6 +60,7 @@ final class NettyServletContext implements ServletContext {
     private final NettyServletRegistration registration;
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private final Map<String, String> initParameters = new ConcurrentHashMap<>();
+    private final List<ServletContextListener> contextListeners = new CopyOnWriteArrayList<>();
     private int sessionTimeout;
 
     NettyServletContext(ClassLoader classLoader, NettyServletRegistration registration) {
@@ -288,8 +294,30 @@ final class NettyServletContext implements ServletContext {
 
     @Override
     public <T extends EventListener> void addListener(T listener) {
-        // the context has no lifecycle events to deliver: Vaadin's listeners are not needed on Netty
-        LOG.debug("Ignoring the servlet context listener {}", listener);
+        if (listener instanceof ServletContextListener contextListener) {
+            // told when the context is destroyed, such as Vaadin's development server, which then stops
+            contextListeners.add(contextListener);
+        } else {
+            LOG.debug("Ignoring the listener {}: the context has no such events to deliver", listener);
+        }
+    }
+
+    /**
+     * Tells the context listeners that the context is destroyed, in the reverse order of their addition, as
+     * a servlet container does.
+     */
+    void destroy() {
+        ServletContextEvent event = new ServletContextEvent(this);
+        List<ServletContextListener> listeners = new ArrayList<>(contextListeners);
+        contextListeners.clear();
+        Collections.reverse(listeners);
+        for (ServletContextListener listener : listeners) {
+            try {
+                listener.contextDestroyed(event);
+            } catch (RuntimeException e) {
+                LOG.warn("The servlet context listener {} failed to stop", listener, e);
+            }
+        }
     }
 
     @Override

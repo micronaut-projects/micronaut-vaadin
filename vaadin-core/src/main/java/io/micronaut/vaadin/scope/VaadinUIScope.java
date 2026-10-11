@@ -60,20 +60,22 @@ final class VaadinUIScope extends AbstractVaadinScope<UIScope> {
             store = new UIBeanStore();
             ComponentUtil.setData(ui, UIBeanStore.class, store);
             UIBeanStore created = store;
-            Registration sessionDestroy = ui.getSession().addSessionDestroyListener(event -> destroy(ui, created));
+            // the listeners refer to the scope through its handle: Vaadin serializes them with the session
+            ScopeHandle handle = handle();
+            Registration sessionDestroy = ui.getSession().addSessionDestroyListener(event -> destroy(handle, ui, created));
             ui.addDetachListener(event -> {
                 if (ui.isClosing()) {
                     sessionDestroy.remove();
-                    destroy(ui, created);
+                    destroy(handle, ui, created);
                 }
             });
         }
         return store.beans();
     }
 
-    private void destroy(UI ui, UIBeanStore store) {
+    private static void destroy(ScopeHandle handle, UI ui, UIBeanStore store) {
         ComponentUtil.setData(ui, UIBeanStore.class, null);
-        destroy(store);
+        handle.destroy(store);
     }
 
     /**

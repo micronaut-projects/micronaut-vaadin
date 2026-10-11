@@ -70,14 +70,16 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
         UI ui = event.getUI();
         Navigation navigation = new Navigation();
         ComponentUtil.setData(ui, Navigation.class, navigation);
-        Registration beforeEnter = ui.addBeforeEnterListener(e -> navigation.beforeEnter(e, store(ui)));
-        Registration afterNavigation = ui.addAfterNavigationListener(e -> navigation.afterNavigation(e, store(ui)));
+        // the listeners refer to the scope through its handle: Vaadin serializes them with the session
+        ScopeHandle handle = handle();
+        Registration beforeEnter = ui.addBeforeEnterListener(e -> navigation.beforeEnter(e, store(handle, ui)));
+        Registration afterNavigation = ui.addAfterNavigationListener(e -> navigation.afterNavigation(e, store(handle, ui)));
         ui.addDetachListener(e -> {
             if (ui.isClosing()) {
                 beforeEnter.remove();
                 afterNavigation.remove();
                 ComponentUtil.setData(ui, Navigation.class, null);
-                close(ui);
+                close(handle, ui);
             }
         });
     }
@@ -88,7 +90,7 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
         if (ui == null) {
             return null;
         }
-        RouteBeanStore store = forCreation ? store(ui) : existingStore(ui);
+        RouteBeanStore store = forCreation ? store(handle(), ui) : existingStore(ui);
         return store == null ? null : store.beans();
     }
 
@@ -115,15 +117,15 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
             }
         }
         CreatedBean<T> created = super.doCreate(creationContext);
-        store(ui).owners.put(creationContext.id(), owner);
+        store(handle(), ui).owners.put(creationContext.id(), owner);
         return created;
     }
 
     /**
      * @return The store of the window of the UI, created if needed, now held by the UI
      */
-    private RouteBeanStore store(UI ui) {
-        RouteStores stores = stores(ui.getSession());
+    private static RouteBeanStore store(ScopeHandle handle, UI ui) {
+        RouteStores stores = stores(handle, ui.getSession());
         String key = key(ui);
         RouteBeanStore store = stores.byKey().get(key);
         if (store == null) {
@@ -144,12 +146,12 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
         return stores == null ? null : stores.byKey().get(key(ui));
     }
 
-    private RouteStores stores(VaadinSession session) {
+    private static RouteStores stores(ScopeHandle handle, VaadinSession session) {
         RouteStores stores = session.getAttribute(RouteStores.class);
         if (stores == null) {
             RouteStores created = new RouteStores();
             session.setAttribute(RouteStores.class, created);
-            session.addSessionDestroyListener(e -> created.byKey().values().forEach(this::destroy));
+            session.addSessionDestroyListener(e -> created.byKey().values().forEach(handle::destroy));
             stores = created;
         }
         return stores;
@@ -161,7 +163,7 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
      * those whose owners it does not navigate to, and go with the session otherwise. The beans of a UI
      * without a window name are destroyed.
      */
-    private void close(UI ui) {
+    private static void close(ScopeHandle handle, UI ui) {
         VaadinSession session = ui.getSession();
         RouteStores stores = session == null ? null : session.getAttribute(RouteStores.class);
         if (stores == null) {
@@ -176,7 +178,7 @@ final class VaadinRouteScope extends AbstractVaadinScope<RouteScope> implements 
         store.ui = null;
         if (key.equals(uiKey(ui))) {
             stores.byKey().remove(key);
-            destroy(store);
+            handle.destroy(store);
         }
     }
 
