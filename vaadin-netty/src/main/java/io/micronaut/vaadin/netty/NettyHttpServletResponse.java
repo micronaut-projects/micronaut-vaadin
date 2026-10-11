@@ -48,6 +48,8 @@ import java.util.TreeMap;
  */
 final class NettyHttpServletResponse implements HttpServletResponse {
 
+    private static final String CHARSET_PARAMETER = "charset=";
+
     private final Map<String, List<String>> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     private final List<Cookie> cookies = new ArrayList<>();
     private final ByteArrayOutputStream body = new ByteArrayOutputStream();
@@ -202,7 +204,7 @@ final class NettyHttpServletResponse implements HttpServletResponse {
         if (contentType == null) {
             return null;
         }
-        return characterEncoding == null || contentType.contains("charset=")
+        return characterEncoding == null || contentType.contains(CHARSET_PARAMETER)
             ? contentType
             : contentType + ";charset=" + characterEncoding;
     }
@@ -275,9 +277,9 @@ final class NettyHttpServletResponse implements HttpServletResponse {
             contentType = null;
             return;
         }
-        int charset = type.toLowerCase(Locale.ROOT).indexOf("charset=");
+        int charset = type.toLowerCase(Locale.ROOT).indexOf(CHARSET_PARAMETER);
         if (charset >= 0) {
-            setCharacterEncoding(type.substring(charset + "charset=".length()).trim());
+            setCharacterEncoding(type.substring(charset + CHARSET_PARAMETER.length()).trim());
             String mediaType = type.substring(0, charset).trim();
             contentType = mediaType.endsWith(";") ? mediaType.substring(0, mediaType.length() - 1).trim() : mediaType;
         } else {
