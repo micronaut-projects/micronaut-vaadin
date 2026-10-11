@@ -123,7 +123,7 @@ public class MicronautInstantiator extends DefaultInstantiator {
     private <T> Optional<T> findUnique(Class<T> type) {
         try {
             return beanContext.findBean(type);
-        } catch (NonUniqueBeanException e) {
+        } catch (NonUniqueBeanException _) {
             return Optional.empty();
         }
     }
