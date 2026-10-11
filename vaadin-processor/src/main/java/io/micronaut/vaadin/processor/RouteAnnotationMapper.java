@@ -16,6 +16,7 @@
 package io.micronaut.vaadin.processor;
 
 import io.micronaut.context.annotation.Bean;
+import io.micronaut.core.annotation.AllowsReflection;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -25,7 +26,9 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 
 /**
- * Makes a class annotated with {@code @Route} a bean, so that views receive dependency injection.
+ * Makes a class annotated with {@code @Route} a bean, so that views receive dependency injection. Vaadin
+ * reads the annotations of a view reflectively, so the class also allows reflection: the Python compiler then
+ * copies them onto the class it generates for a view written in Python.
  *
  * @author Graeme Rocher
  * @since 1.0.0
@@ -40,6 +43,11 @@ public final class RouteAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        return List.of(AnnotationValue.builder(Bean.class).build());
+        return List.of(
+            AnnotationValue.builder(Bean.class).build(),
+            // Vaadin reads the annotations of a view from its class: a view written in Python gets them on the
+            // class that the Python compiler generates for it
+            AnnotationValue.builder(AllowsReflection.class).build()
+        );
     }
 }

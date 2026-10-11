@@ -89,7 +89,21 @@ public abstract class MicronautBrowserlessTest extends BaseBrowserlessTest imple
         return "JUnit 6";
     }
 
+    /**
+     * Sets Vaadin up for a test. The application context comes from Micronaut's JUnit extension, as a parameter:
+     * a test class whose bean definition does not inject the inherited setter, such as one written in Python,
+     * receives it too.
+     *
+     * @param applicationContext The application context of the test
+     */
     @BeforeEach
+    protected void setUpVaadin(ApplicationContext applicationContext) {
+        if (this.applicationContext == null) {
+            this.applicationContext = applicationContext;
+        }
+        initVaadinEnvironment();
+    }
+
     @Override
     protected void initVaadinEnvironment() {
         scanTesters();
