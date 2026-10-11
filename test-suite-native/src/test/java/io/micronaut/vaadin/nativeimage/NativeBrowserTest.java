@@ -117,7 +117,7 @@ class NativeBrowserTest {
     }
 
     private boolean listening() {
-        try (Socket _ = new Socket("localhost", port)) {
+        try (var _ = new Socket("localhost", port)) {
             return true;
         } catch (IOException _) {
             return false;
