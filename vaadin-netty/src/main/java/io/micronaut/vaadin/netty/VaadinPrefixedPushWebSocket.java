@@ -16,6 +16,7 @@
 package io.micronaut.vaadin.netty;
 
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.annotation.RouteCondition;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.websocket.CloseReason;
 import io.micronaut.websocket.WebSocketSession;
@@ -37,17 +38,22 @@ import io.micronaut.websocket.annotation.ServerWebSocket;
 @Secured("isAnonymous()") // Vaadin controls the access to its views
 final class VaadinPrefixedPushWebSocket {
 
+    private static final String UPGRADE = "#{T(io.micronaut.vaadin.netty.VaadinPushWebSocket).isUpgrade(request)}";
+
     private final VaadinNettyRuntime runtime;
 
     VaadinPrefixedPushWebSocket(VaadinNettyRuntime runtime) {
         this.runtime = runtime;
     }
 
+    // only WebSocket upgrades: the long polling of push, a plain GET of the same path, goes to Vaadin's route
+    @RouteCondition(UPGRADE)
     @OnOpen
-    void open(WebSocketSession session, HttpRequest<?> request) {
-        runtime.openPush(session, request);
+    void open(WebSocketSession session, HttpRequest<?> upgradeRequest) {
+        runtime.openPush(session, upgradeRequest);
     }
 
+    @RouteCondition(UPGRADE)
     @OnMessage
     void message(String message, WebSocketSession session) {
         runtime.pushMessage(session, message);

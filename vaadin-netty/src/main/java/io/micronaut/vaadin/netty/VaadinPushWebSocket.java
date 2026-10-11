@@ -15,7 +15,9 @@
  */
 package io.micronaut.vaadin.netty;
 
+import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.annotation.RouteCondition;
 import io.micronaut.security.annotation.Secured;
 import io.micronaut.websocket.CloseReason;
 import io.micronaut.websocket.WebSocketSession;
@@ -36,17 +38,22 @@ import io.micronaut.websocket.annotation.ServerWebSocket;
 @Secured("isAnonymous()") // Vaadin controls the access to its views
 final class VaadinPushWebSocket {
 
+    private static final String UPGRADE = "#{T(io.micronaut.vaadin.netty.VaadinPushWebSocket).isUpgrade(request)}";
+
     private final VaadinNettyRuntime runtime;
 
     VaadinPushWebSocket(VaadinNettyRuntime runtime) {
         this.runtime = runtime;
     }
 
+    // only WebSocket upgrades: the long polling of push, a plain GET of the same path, goes to Vaadin's route
+    @RouteCondition(UPGRADE)
     @OnOpen
-    void open(WebSocketSession session, HttpRequest<?> request) {
-        runtime.openPush(session, request);
+    void open(WebSocketSession session, HttpRequest<?> upgradeRequest) {
+        runtime.openPush(session, upgradeRequest);
     }
 
+    @RouteCondition(UPGRADE)
     @OnMessage
     void message(String message, WebSocketSession session) {
         runtime.pushMessage(session, message);
@@ -55,5 +62,13 @@ final class VaadinPushWebSocket {
     @OnClose
     void close(WebSocketSession session, CloseReason reason) {
         runtime.closePush(session, reason.getCode());
+    }
+
+    /**
+     * @param request A request to a push endpoint
+     * @return Whether the request opens a WebSocket, rather than polling
+     */
+    static boolean isUpgrade(HttpRequest<?> request) {
+        return request.getHeaders().get(HttpHeaders.UPGRADE) != null;
     }
 }
