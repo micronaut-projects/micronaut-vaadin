@@ -19,6 +19,8 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
+    // Vite needs Node.js, which Vaadin may install
+    io.micronaut.build.internal.vaadin.NodeInstallService.serialize(this)
     // development mode reads the frontend sources and writes generated files into the project: keep it under build/
     val projectDir = layout.buildDirectory.dir("vaadin-project")
     val frontend = layout.projectDirectory.dir("src/test/frontend")
