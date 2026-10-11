@@ -19,6 +19,7 @@ import io.micronaut.context.scope.AbstractConcurrentCustomScope;
 import io.micronaut.context.scope.CreatedBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.BeanIdentifier;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -37,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 abstract class AbstractVaadinScope<A extends Annotation> extends AbstractConcurrentCustomScope<A> {
 
+    private final ScopeHandle handle = new ScopeHandle(this);
+
     AbstractVaadinScope(Class<A> annotationType) {
         super(annotationType, true);
     }
@@ -52,12 +55,47 @@ abstract class AbstractVaadinScope<A extends Annotation> extends AbstractConcurr
     }
 
     /**
+     * @return A serializable reference to this scope, for the listeners that the scope adds to UIs and
+     * sessions, which Vaadin serializes with them
+     */
+    final ScopeHandle handle() {
+        return handle;
+    }
+
+    /**
      * Destroys the beans of a store.
      *
      * @param store The store
      */
     final void destroy(BeanStore store) {
         destroyScope(store.beans());
+    }
+
+    /**
+     * A reference to a scope that survives the serialization of a session without serializing the scope: once
+     * read back, it refers to no scope, and the beans of the stores, which are not serialized either, are gone.
+     */
+    static final class ScopeHandle implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private final transient @Nullable AbstractVaadinScope<?> scope;
+
+        ScopeHandle(AbstractVaadinScope<?> scope) {
+            this.scope = scope;
+        }
+
+        /**
+         * Destroys the beans of a store, unless the handle was read back from a serialized session.
+         *
+         * @param store The store
+         */
+        void destroy(BeanStore store) {
+            if (scope != null) {
+                scope.destroy(store);
+            }
+        }
     }
 
     /**
