@@ -122,7 +122,7 @@ class NettyHttpServletResponseTest {
     }
 
     @Test
-    void errorsAndRedirectsSetTheStatus() throws IOException {
+    void errorsAndRedirectsSetTheStatus() {
         NettyHttpServletResponse error = new NettyHttpServletResponse();
         error.sendError(HttpServletResponse.SC_NOT_FOUND, "missing");
         assertEquals(HttpServletResponse.SC_NOT_FOUND, error.getStatus());
