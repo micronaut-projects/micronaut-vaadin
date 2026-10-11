@@ -8,6 +8,8 @@ scopes:
   title: Vaadin Scopes
 servletRuntime:
   title: Running on a Servlet Container
+devMode:
+  title: Development Mode
 testing:
   title: Testing
 repository: Repository

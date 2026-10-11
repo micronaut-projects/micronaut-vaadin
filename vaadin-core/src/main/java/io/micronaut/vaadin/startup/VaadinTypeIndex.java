@@ -22,6 +22,8 @@ import com.vaadin.flow.component.page.AppShellConfigurator;
 import com.vaadin.flow.router.HasErrorParameter;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.UIInitListener;
+import com.vaadin.flow.server.VaadinServiceInitListener;
 import io.micronaut.context.BeanContext;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -91,6 +93,19 @@ public class VaadinTypeIndex {
         for (Class<?> type : INSTANTIATED_TYPES) {
             types.addAll(typesOf(type));
         }
+        return Collections.unmodifiableSet(types);
+    }
+
+    /**
+     * The types from which Vaadin's development mode finds the frontend dependencies of the application:
+     * every Vaadin type, and the {@code UIInitListener} and {@code VaadinServiceInitListener} beans.
+     *
+     * @return The entry points of the application for development mode
+     */
+    public Set<Class<?>> getDevelopmentTypes() {
+        Set<Class<?>> types = new LinkedHashSet<>(getTypes());
+        types.addAll(typesOf(UIInitListener.class));
+        types.addAll(typesOf(VaadinServiceInitListener.class));
         return Collections.unmodifiableSet(types);
     }
 
