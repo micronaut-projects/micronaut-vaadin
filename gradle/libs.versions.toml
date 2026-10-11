@@ -77,6 +77,7 @@ vaadin-core-components = { module = "com.vaadin:vaadin-core", version.ref = "vaa
 vaadin-dev-bundle = { module = "com.vaadin:vaadin-dev-bundle", version.ref = "vaadin" }
 
 jetty-ee10-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet", version.ref = "jetty" }
+playwright = { module = "com.microsoft.playwright:playwright", version = "1.63.0" }
 jetty-ee10-websocket-jakarta-server = { module = "org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server", version.ref = "jetty" }
 tomcat-embed-websocket = { module = "org.apache.tomcat.embed:tomcat-embed-websocket", version.ref = "tomcat" }
 undertow-websockets-jsr = { module = "io.undertow:undertow-websockets-jsr", version.ref = "undertow" }
