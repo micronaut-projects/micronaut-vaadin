@@ -23,8 +23,10 @@ import com.vaadin.flow.server.VaadinServlet;
 import com.vaadin.flow.server.VaadinServletService;
 import io.micronaut.context.BeanContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import org.jspecify.annotations.Nullable;
 
 import java.io.Serial;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -47,6 +49,8 @@ public class MicronautVaadinServletService extends VaadinServletService {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private static final String WEB_RESOURCES = "META-INF/resources";
 
     private final transient BeanContext beanContext;
 
@@ -90,6 +94,22 @@ public class MicronautVaadinServletService extends VaadinServletService {
             throw new ServiceException("Cannot initialize the Vaadin service: there are several instantiator beans: " + beans);
         }
         return Optional.of(beans.isEmpty() ? new MicronautInstantiator(this, beanContext) : beans.iterator().next());
+    }
+
+    /**
+     * Finds a static resource of Vaadin, such as the push client, also in the {@code META-INF/resources} of
+     * the jars on the classpath: embedded servlet containers and Netty do not serve them as web resources.
+     *
+     * @param path The path of the resource, starting with {@code /}
+     * @return The resource, or {@code null}
+     */
+    @Override
+    public @Nullable URL getStaticResource(String path) {
+        URL resource = super.getStaticResource(path);
+        if (resource == null && path.startsWith("/") && !path.contains("..")) {
+            resource = getClassLoader().getResource(WEB_RESOURCES + path);
+        }
+        return resource;
     }
 
     @Override
