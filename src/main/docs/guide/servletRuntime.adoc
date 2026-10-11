@@ -29,6 +29,28 @@ vaadin:
 
 Vaadin keeps its state in the HTTP session of the container. Micronaut Servlet creates the Jetty context without sessions, so the integration enables them; Tomcat and Undertow have sessions by default. A Vaadin application with several instances needs sticky sessions.
 
+=== Push
+
+Vaadin pushes updates to the browser with `@Push`, over WebSockets when the container supports them and over long polling otherwise. For WebSockets, add Micronaut Servlet's WebSocket support and the WebSocket implementation of the container:
+
+dependency:io.micronaut.servlet:micronaut-servlet-websocket[]
+
+[cols="1,2"]
+|===
+|Container |WebSocket implementation
+
+|Jetty
+|`org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server`
+
+|Tomcat
+|`org.apache.tomcat.embed:tomcat-embed-websocket`
+
+|Undertow
+|`io.undertow:undertow-websockets-jsr`
+|===
+
+The push endpoint is `/VAADIN/push`, or below the prefix of `vaadin.url-mapping`.
+
 === Production builds
 
 In production mode, Vaadin serves the frontend bundle built by its Gradle or Maven plugin. Apply the plugin to the application and run its `build-frontend` step for production builds, as with any Vaadin application.

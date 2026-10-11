@@ -45,6 +45,9 @@ final class VaadinRootFilter extends HttpFilter {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private static final String UPGRADE = "Upgrade";
+    private static final String WEBSOCKET = "websocket";
+
     private final transient Router router;
     private final transient StaticResourceResolver staticResources;
     private final List<String> excludeUrls;
@@ -61,7 +64,8 @@ final class VaadinRootFilter extends HttpFilter {
         if (path.isEmpty()) {
             path = "/";
         }
-        if (handledByMicronaut(request.getMethod(), path)) {
+        // a WebSocket upgrade, such as Vaadin's push, is handled by the container's WebSocket filter
+        if (handledByMicronaut(request.getMethod(), path) || WEBSOCKET.equalsIgnoreCase(request.getHeader(UPGRADE))) {
             chain.doFilter(request, response);
             return;
         }
