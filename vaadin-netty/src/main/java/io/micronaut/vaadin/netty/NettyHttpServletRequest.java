@@ -55,6 +55,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * A request of the servlet API over a request of Micronaut, with the parts of the API that Vaadin uses.
@@ -74,6 +75,8 @@ final class NettyHttpServletRequest implements HttpServletRequest {
     private final Map<String, Object> attributes = new ConcurrentHashMap<>();
     private @Nullable String characterEncoding;
     private @Nullable NettyHttpSession session;
+    private @Nullable Supplier<NettyAsyncContext> asyncContextFactory;
+    private @Nullable NettyAsyncContext asyncContext;
 
     NettyHttpServletRequest(HttpRequest<?> request,
                             InputStream body,
@@ -464,29 +467,54 @@ final class NettyHttpServletRequest implements HttpServletRequest {
         return servletContext;
     }
 
+    /**
+     * Makes the request support the asynchronous servlet API.
+     *
+     * @param factory Creates its asynchronous context
+     */
+    void setAsyncContextFactory(Supplier<NettyAsyncContext> factory) {
+        this.asyncContextFactory = factory;
+    }
+
     @Override
     public AsyncContext startAsync() {
-        throw unsupported();
+        if (asyncContextFactory == null) {
+            throw new IllegalStateException("The request is not asynchronous");
+        }
+        if (asyncContext == null) {
+            asyncContext = asyncContextFactory.get();
+        }
+        return asyncContext;
     }
 
     @Override
     public AsyncContext startAsync(ServletRequest servletRequest, ServletResponse servletResponse) {
-        throw unsupported();
+        return startAsync();
     }
 
     @Override
     public boolean isAsyncStarted() {
-        return false;
+        return asyncContext != null;
     }
 
     @Override
     public boolean isAsyncSupported() {
-        return false;
+        return asyncContextFactory != null;
     }
 
     @Override
     public AsyncContext getAsyncContext() {
-        throw new IllegalStateException("The request is not asynchronous");
+        if (asyncContext == null) {
+            throw new IllegalStateException("The request is not asynchronous");
+        }
+        return asyncContext;
+    }
+
+    /**
+     * @return The asynchronous context, if the servlet started one
+     */
+    @Nullable NettyAsyncContext asyncContext() {
+        return asyncContext;
     }
 
     @Override

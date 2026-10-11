@@ -23,11 +23,24 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.http.body.CloseableByteBody;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.TaskScheduler;
 import io.micronaut.session.Session;
 import io.micronaut.session.SessionStore;
 import io.micronaut.vaadin.VaadinConfigurationProperties;
 import io.micronaut.vaadin.startup.VaadinStartup;
+import io.micronaut.websocket.WebSocketSession;
+import com.vaadin.flow.server.communication.JSR356WebsocketInitializer;
+import org.atmosphere.cpr.ApplicationConfig;
+import org.atmosphere.cpr.AtmosphereFramework;
+import org.atmosphere.cpr.AtmosphereRequest;
+import org.atmosphere.cpr.AtmosphereRequestImpl;
+import org.atmosphere.cpr.AtmosphereResponse;
+import org.atmosphere.cpr.AtmosphereResponseImpl;
+import org.atmosphere.cpr.WebSocketProcessorFactory;
+import org.atmosphere.websocket.WebSocketProcessor;
 import jakarta.annotation.PreDestroy;
+import jakarta.inject.Named;
 import jakarta.servlet.ServletException;
 import org.jspecify.annotations.Nullable;
 
@@ -36,6 +49,10 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 /**
  * Runs the Vaadin servlet on Netty: starts Vaadin with the types known at compile time, then serves the
@@ -48,19 +65,27 @@ import java.util.List;
 final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
+    private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
     private static final String VAADIN_PATH = "/" + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
 
     private final NettyServletContext servletContext;
     private final NettyVaadinServlet servlet;
     private final SessionStore<Session> sessionStore;
+    private final TaskScheduler scheduler;
+    private final Executor executor;
     private final String prefix;
+    private final AtmosphereFramework atmosphere;
 
     @SuppressWarnings("unchecked")
     VaadinNettyRuntime(ApplicationContext applicationContext,
                        VaadinConfigurationProperties configuration,
                        VaadinStartup startup,
-                       @SuppressWarnings("rawtypes") SessionStore sessionStore) throws ServletException {
+                       @SuppressWarnings("rawtypes") SessionStore sessionStore,
+                       @Named(TaskExecutors.SCHEDULED) TaskScheduler scheduler,
+                       @Named(TaskExecutors.BLOCKING) Executor executor) throws ServletException {
         this.sessionStore = sessionStore;
+        this.scheduler = scheduler;
+        this.executor = executor;
         this.prefix = prefixOf(configuration.getUrlMapping());
 
         List<String> mappings = new ArrayList<>();
@@ -69,8 +94,13 @@ final class VaadinNettyRuntime {
         if (prefix.isEmpty()) {
             registration.setInitParameter(VaadinServlet.INTERNAL_VAADIN_SERVLET_VITE_DEV_MODE_FRONTEND_PATH, "");
         }
+        // push: Atmosphere is initialized here with the asynchronous support of Netty, and the Vaadin servlet reuses it
+        registration.setInitParameter(ApplicationConfig.PROPERTY_COMET_SUPPORT, NettyAtmosphereSupport.class.getName());
         this.servletContext = new NettyServletContext(VaadinNettyRuntime.class.getClassLoader(), registration);
         startup.initialize(servletContext);
+        JSR356WebsocketInitializer.initAtmosphereForVaadinServlet(registration, servletContext);
+        this.atmosphere = (AtmosphereFramework) Objects.requireNonNull(
+            servletContext.getAttribute(JSR356WebsocketInitializer.getAttributeName(SERVLET_NAME)), "Atmosphere was not initialized");
         this.servlet = new NettyVaadinServlet(applicationContext);
         servlet.init(registration.toServletConfig(servletContext));
     }
@@ -84,36 +114,97 @@ final class VaadinNettyRuntime {
 
     /**
      * Serves a request with the Vaadin servlet. Blocks while Vaadin reads the body and writes the response.
+     * When Vaadin makes the request asynchronous, for push over long polling, the response is sent once it
+     * completes, without holding the thread.
      *
      * @param request The request
      * @param body    Its body
      * @return The response
      */
-    HttpResponse<?> service(HttpRequest<?> request, AsyncRequestBody body) {
+    CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, AsyncRequestBody body) {
         String path = request.getPath();
-        String servletPath;
-        @Nullable String pathInfo;
-        if (prefix.isEmpty()) {
-            servletPath = "";
-            pathInfo = path;
-        } else if (path.equals(prefix) || path.startsWith(prefix + "/")) {
-            servletPath = prefix;
-            pathInfo = path.length() == prefix.length() ? null : path.substring(prefix.length());
-        } else {
-            // the frontend resources of Vaadin, under /VAADIN whatever the mapping of the views
-            servletPath = VAADIN_PATH;
-            pathInfo = path.substring(VAADIN_PATH.length());
-        }
+        String servletPath = servletPath(path);
+        @Nullable String pathInfo = pathInfo(path);
         try (CloseableByteBody byteBody = body.takeBody(); InputStream in = byteBody.toInputStream()) {
             NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath, pathInfo);
             NettyHttpServletResponse servletResponse = new NettyHttpServletResponse();
+            servletRequest.setAsyncContextFactory(() -> new NettyAsyncContext(servletRequest, servletResponse, scheduler, executor));
             servlet.service(servletRequest, servletResponse);
-            return servletResponse.toHttpResponse();
+            NettyAsyncContext asyncContext = servletRequest.asyncContext();
+            if (asyncContext == null) {
+                return CompletableFuture.completedFuture(servletResponse.toHttpResponse());
+            }
+            return asyncContext.whenComplete().thenApply(done -> servletResponse.toHttpResponse());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ServletException e) {
             throw new IllegalStateException("Vaadin failed to serve " + path, e);
         }
+    }
+
+    /**
+     * Opens a WebSocket of Vaadin's push.
+     *
+     * @param session The WebSocket session
+     * @param request The handshake request
+     */
+    void openPush(WebSocketSession session, HttpRequest<?> request) {
+        AtmosphereWebSocket webSocket = new AtmosphereWebSocket(atmosphere.getAtmosphereConfig(), session, executor);
+        session.put(WEBSOCKET_ATTRIBUTE, webSocket);
+        String path = request.getPath();
+        NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, InputStream.nullInputStream(), servletContext, sessionStore,
+            servletPath(path), pathInfo(path));
+        AtmosphereRequest atmosphereRequest = AtmosphereRequestImpl.wrap(servletRequest);
+        AtmosphereResponse atmosphereResponse = AtmosphereResponseImpl.newInstance(atmosphere.getAtmosphereConfig(), atmosphereRequest, webSocket);
+        webSocket.runInOrder(() -> {
+            try {
+                processor().open(webSocket, atmosphereRequest, atmosphereResponse);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    /**
+     * Hands a message of a WebSocket of Vaadin's push to Atmosphere.
+     *
+     * @param session The WebSocket session
+     * @param message The message
+     */
+    void pushMessage(WebSocketSession session, String message) {
+        session.get(WEBSOCKET_ATTRIBUTE, AtmosphereWebSocket.class)
+            .ifPresent(webSocket -> webSocket.runInOrder(() -> processor().invokeWebSocketProtocol(webSocket, message)));
+    }
+
+    /**
+     * Closes a WebSocket of Vaadin's push.
+     *
+     * @param session The WebSocket session
+     * @param code    The close code
+     */
+    void closePush(WebSocketSession session, int code) {
+        session.get(WEBSOCKET_ATTRIBUTE, AtmosphereWebSocket.class)
+            .ifPresent(webSocket -> webSocket.runInOrder(() -> processor().close(webSocket, code)));
+    }
+
+    private String servletPath(String path) {
+        if (prefix.isEmpty()) {
+            return "";
+        }
+        if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+            return prefix;
+        }
+        // the frontend resources of Vaadin, under /VAADIN whatever the mapping of the views
+        return VAADIN_PATH;
+    }
+
+    private @Nullable String pathInfo(String path) {
+        String servletPath = servletPath(path);
+        return path.length() == servletPath.length() ? null : path.substring(servletPath.length());
+    }
+
+    private WebSocketProcessor processor() {
+        return WebSocketProcessorFactory.getDefault().getWebSocketProcessor(atmosphere);
     }
 
     @PreDestroy
