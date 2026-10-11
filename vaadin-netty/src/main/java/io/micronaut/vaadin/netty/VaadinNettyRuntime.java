@@ -21,6 +21,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.scheduling.TaskExecutors;
@@ -43,10 +44,14 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.servlet.ServletException;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -65,6 +70,7 @@ import java.util.concurrent.Executor;
 final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
+    private static final Logger LOG = LoggerFactory.getLogger(VaadinNettyRuntime.class);
     private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
     private static final String VAADIN_PATH = "/" + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
 
@@ -122,23 +128,75 @@ final class VaadinNettyRuntime {
      * @return The response
      */
     CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, AsyncRequestBody body) {
-        String path = request.getPath();
-        String servletPath = servletPath(path);
-        @Nullable String pathInfo = pathInfo(path);
+        if (isMultipart(request)) {
+            // uploads: the parts are read into temporary files, which Vaadin reads through getParts()
+            List<NettyPart> parts = readParts(body);
+            return service(request, InputStream.nullInputStream(), parts)
+                .whenComplete((response, error) -> deleteParts(parts));
+        }
         try (CloseableByteBody byteBody = body.takeBody(); InputStream in = byteBody.toInputStream()) {
-            NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath, pathInfo);
-            NettyHttpServletResponse servletResponse = new NettyHttpServletResponse();
-            servletRequest.setAsyncContextFactory(() -> new NettyAsyncContext(servletRequest, servletResponse, scheduler, executor));
+            return service(request, in, null);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private CompletionStage<HttpResponse<?>> service(HttpRequest<?> request, InputStream in, @Nullable List<NettyPart> parts) {
+        String path = request.getPath();
+        NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath(path), pathInfo(path));
+        if (parts != null) {
+            servletRequest.setParts(parts);
+        }
+        NettyHttpServletResponse servletResponse = new NettyHttpServletResponse();
+        servletRequest.setAsyncContextFactory(() -> new NettyAsyncContext(servletRequest, servletResponse, scheduler, executor));
+        try {
             servlet.service(servletRequest, servletResponse);
-            NettyAsyncContext asyncContext = servletRequest.asyncContext();
-            if (asyncContext == null) {
-                return CompletableFuture.completedFuture(servletResponse.toHttpResponse());
-            }
-            return asyncContext.whenComplete().thenApply(done -> servletResponse.toHttpResponse());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ServletException e) {
             throw new IllegalStateException("Vaadin failed to serve " + path, e);
+        }
+        NettyAsyncContext asyncContext = servletRequest.asyncContext();
+        if (asyncContext == null) {
+            return CompletableFuture.completedFuture(servletResponse.toHttpResponse());
+        }
+        return asyncContext.whenComplete().thenApply(done -> servletResponse.toHttpResponse());
+    }
+
+    private static boolean isMultipart(HttpRequest<?> request) {
+        return request.getContentType()
+            .map(type -> "multipart".equalsIgnoreCase(type.getType()))
+            .orElse(false);
+    }
+
+    private static List<NettyPart> readParts(AsyncRequestBody body) {
+        List<NettyPart> parts = new ArrayList<>();
+        try {
+            body.parts().forEach(part -> {
+                Path file;
+                try {
+                    file = Files.createTempFile("vaadin-upload-", ".part");
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                String contentType = part.contentType().map(MediaType::toString).orElse(null);
+                parts.add(new NettyPart(part.name(), part.fileName(), contentType, file));
+                return part.transferTo(file);
+            }).toCompletableFuture().join();
+        } catch (RuntimeException e) {
+            deleteParts(parts);
+            throw e;
+        }
+        return parts;
+    }
+
+    private static void deleteParts(List<NettyPart> parts) {
+        for (NettyPart part : parts) {
+            try {
+                part.delete();
+            } catch (IOException e) {
+                LOG.debug("Cannot delete the temporary file of an uploaded part", e);
+            }
         }
     }
 
