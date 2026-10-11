@@ -20,6 +20,7 @@ import com.vaadin.flow.di.LookupInitializer;
 import com.vaadin.flow.server.VaadinContext;
 import io.micronaut.context.BeanContext;
 
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -59,7 +60,7 @@ public class MicronautLookupInitializer extends LookupInitializer {
         return new MicronautLookup(beanContext, services, (service, implementation) -> instantiate(beanContext, service, implementation));
     }
 
-    private Object instantiate(BeanContext beanContext, Class<?> service, Class<?> implementation) {
+    private @Nullable Object instantiate(BeanContext beanContext, Class<?> service, Class<?> implementation) {
         // a service implementation that is also a bean is provided by the bean context
         for (Object bean : beanContext.getBeansOfType(service)) {
             if (implementation.isInstance(bean)) {
