@@ -77,8 +77,7 @@ public class VaadinTypeIndex {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Set<Class<? extends HasErrorParameter<?>>> getErrorViews() {
-        Set result = typesOf(HasErrorParameter.class);
-        return result;
+        return (Set) typesOf(HasErrorParameter.class);
     }
 
     /**
