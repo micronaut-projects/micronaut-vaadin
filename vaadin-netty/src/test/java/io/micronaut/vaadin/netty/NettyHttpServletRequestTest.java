@@ -5,6 +5,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.cookie.Cookie;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -162,5 +164,17 @@ class NettyHttpServletRequestTest {
         assertNotNull(session.getId());
         assertSame(servletContext, session.getServletContext());
         assertEquals(session.getId(), request.getRequestedSessionId());
+    }
+
+    @Test
+    void thePartsOfAMultipartRequest() throws Exception {
+        NettyHttpServletRequest request = request(HttpRequest.POST("/ui/view", ""), "");
+        assertThrows(ServletException.class, request::getParts);
+
+        NettyPart file = new NettyPart("file", "hello.txt", "text/plain", Path.of("hello.part"));
+        request.setParts(List.of(file));
+        assertEquals(List.of(file), List.copyOf(request.getParts()));
+        assertSame(file, request.getPart("file"));
+        assertNull(request.getPart("missing"));
     }
 }

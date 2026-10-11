@@ -18,6 +18,6 @@ Vaadin keeps its state in a session of https://micronaut-projects.github.io/micr
 
 Push runs over Micronaut's WebSocket support, which the integration brings in, at `/VAADIN/push` or below the prefix of `vaadin.url-mapping`. The live reload of Vaadin's development tools uses the same endpoint. Each connection's messages are handed to Vaadin one at a time, in order, on the blocking executor.
 
-=== Limitations
+=== Uploads
 
-The Netty integration does not support file uploads yet: they need the multipart support of the servlet API. Use a servlet container for them until they are available.
+The parts of an upload are written to temporary files before Vaadin handles the request, and deleted once the response is sent. `micronaut.server.max-request-size` limits the size of an upload, besides the limits of Vaadin's `Upload` component.
