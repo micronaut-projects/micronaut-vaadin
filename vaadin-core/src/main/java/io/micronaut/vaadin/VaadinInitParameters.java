@@ -48,13 +48,18 @@ public final class VaadinInitParameters {
 
     /**
      * @param propertyResolver The application configuration
-     * @return The Vaadin initialization parameters that the configuration sets
+     * @return The Vaadin initialization parameters that the configuration sets, with the defaults of the integration
      */
     public static Map<String, String> from(PropertyResolver propertyResolver) {
         Map<String, String> parameters = new LinkedHashMap<>();
         for (String name : NAMES) {
             configuredValue(propertyResolver, name).ifPresent(value -> parameters.put(name, value));
         }
+        // Development mode finds the frontend dependencies of the application from the types it is given, which
+        // here are those of the compile-time index: the views, layouts and other entry points of the application,
+        // not the components of the add-ons on the class path. It follows the classes they use, as a production
+        // build does, rather than expect every class annotated with @JsModule or @NpmPackage
+        parameters.putIfAbsent(InitParameters.SERVLET_PARAMETER_DEVMODE_OPTIMIZE_BUNDLE, "true");
         return parameters;
     }
 
