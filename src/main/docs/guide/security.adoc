@@ -44,7 +44,75 @@ Set `vaadin.security.enabled` to `false` to turn the access control off. To chan
 
 === The current user
 
-Views see the user through the request, for example `VaadinRequest.getCurrent().getUserPrincipal()`: it is the `Authentication` of Micronaut Security, with the name and the roles of the user.
+Inject `AuthenticationContext` to know who is signed in, with which roles, and to sign out:
+
+[source,java]
+----
+@Route("admin")
+@RolesAllowed("ADMIN")
+public class AdminView extends VerticalLayout {
+
+    public AdminView(AuthenticationContext authentication) {
+        add(new Span("Hello " + authentication.getName().orElse("")),
+            new Button("Log out", event -> authentication.logout()));
+    }
+}
+----
+
+`logout()` sends the browser to the logout endpoint of Micronaut Security, `vaadin.security.logout-path`, `/logout` by default.
+
+=== Signing in
+
+Vaadin's `LoginForm` can post the credentials straight to the login endpoint of Micronaut Security, which authenticates them with the authentication providers of the application:
+
+[source,java]
+----
+@Route("login")
+@AnonymousAllowed
+public class LoginView extends VerticalLayout implements BeforeEnterObserver {
+
+    private final LoginForm login = new LoginForm();
+
+    public LoginView() {
+        login.setAction("login"); // <1>
+        add(login);
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        login.setError(event.getLocation().getQueryParameters().getParameters().containsKey("error")); // <2>
+    }
+}
+----
+<1> The form posts to `/login`, the login endpoint of Micronaut Security, which wins over the view of the same path for a `POST`
+<2> Micronaut Security redirects to the login failure URL, configured below, when the credentials are wrong
+
+Keep the user in a cookie, for example a JWT with `micronaut-security-jwt`, and configure where Micronaut Security redirects:
+
+[configuration]
+----
+vaadin:
+  security:
+    login-view: /login
+micronaut:
+  security:
+    authentication: cookie
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: "${JWT_GENERATOR_SIGNATURE_SECRET}"
+    redirect:
+      login-success: /
+      login-failure: /login?error
+      logout: /
+    endpoints:
+      logout:
+        get-allowed: true
+----
+
+The views can also read the user from the request: `VaadinRequest.getCurrent().getUserPrincipal()` is the `Authentication` of Micronaut Security.
 
 === How users are authenticated
 

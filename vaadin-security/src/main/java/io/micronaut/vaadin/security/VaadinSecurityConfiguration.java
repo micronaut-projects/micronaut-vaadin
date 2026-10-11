@@ -38,8 +38,14 @@ public class VaadinSecurityConfiguration implements Toggleable {
      */
     public static final boolean DEFAULT_ENABLED = true;
 
+    /**
+     * The default path of the logout endpoint of Micronaut Security.
+     */
+    public static final String DEFAULT_LOGOUT_PATH = "/logout";
+
     private boolean enabled = DEFAULT_ENABLED;
     private @Nullable String loginView;
+    private String logoutPath = DEFAULT_LOGOUT_PATH;
 
     @Override
     public boolean isEnabled() {
@@ -70,5 +76,22 @@ public class VaadinSecurityConfiguration implements Toggleable {
      */
     public void setLoginView(@Nullable String loginView) {
         this.loginView = loginView;
+    }
+
+    /**
+     * @return The path the browser goes to when the user signs out
+     */
+    public String getLogoutPath() {
+        return logoutPath;
+    }
+
+    /**
+     * The path the browser goes to when the user signs out with {@link AuthenticationContext#logout()}: the
+     * logout endpoint of Micronaut Security. Default value: {@value #DEFAULT_LOGOUT_PATH}.
+     *
+     * @param logoutPath The logout path
+     */
+    public void setLogoutPath(String logoutPath) {
+        this.logoutPath = logoutPath;
     }
 }
