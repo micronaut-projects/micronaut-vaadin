@@ -75,6 +75,9 @@ final class VaadinNettyRoutes implements HttpRoutes {
         group.any(uri)
             // Vaadin reads every kind of body itself, uploads included
             .consumesAll()
+            // every other route matching a request wins: the controllers of the application, and the endpoints of
+            // Micronaut modules such as the login endpoint of Micronaut Security
+            .order(Integer.MAX_VALUE)
             // Micronaut Security, when present, lets Vaadin's requests through: Vaadin controls the access to its views
             .annotate(SECURED, secured -> secured.values(IS_ANONYMOUS))
             .executeOn(TaskExecutors.BLOCKING)

@@ -6,7 +6,7 @@ Vaadin's requests are served by functional routes, on the blocking executor: Vaa
 
 === URL mapping
 
-`vaadin.url-mapping` and `vaadin.exclude-urls` work as on a servlet container. With the default `/*`, Vaadin serves the root of the application next to your controllers: the routes of the controllers win, and the paths of static resources and of `vaadin.exclude-urls` stay with Micronaut.
+`vaadin.url-mapping` and `vaadin.exclude-urls` work as on a servlet container. With the default `/*`, Vaadin serves the root of the application next to your controllers: any other route that matches a request wins, such as the routes of your controllers or the login endpoint of Micronaut Security, and the paths of static resources and of `vaadin.exclude-urls` stay with Micronaut.
 
 Micronaut filters, including those of Micronaut Security, apply to Vaadin's requests like to any other route.
 
