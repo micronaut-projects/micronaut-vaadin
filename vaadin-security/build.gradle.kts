@@ -9,6 +9,8 @@ dependencies {
     api(mnSecurity.micronaut.security)
     // the authentication of Vaadin's requests on a servlet container, used when vaadin-servlet is present
     compileOnly(projects.micronautVaadinServlet)
+    // the Micronaut session of Vaadin's requests on a servlet container, used when Micronaut Session is present
+    compileOnly(mnSession.micronaut.session)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)
