@@ -30,6 +30,9 @@ spock = "2.3-groovy-4.0"
 vaadin = "25.3.1"
 # The Jetty release of micronaut-servlet, to compile the session support against
 jetty = "12.1.10"
+# The Tomcat and Undertow releases of micronaut-servlet, for their WebSocket support in tests
+tomcat = "11.0.25"
+undertow = "2.3.26.Final"
 
 # Managed versions appear in the BOM
 # Vaadin 25.3.1 pairs Flow 25.3.2 with Flow Components 25.3.1. The platform's vaadin-bom is not
@@ -72,6 +75,9 @@ vaadin-browserless-test-junit6 = { module = "com.vaadin:browserless-test-junit6"
 vaadin-core-components = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
 
 jetty-ee10-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet", version.ref = "jetty" }
+jetty-ee10-websocket-jakarta-server = { module = "org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server", version.ref = "jetty" }
+tomcat-embed-websocket = { module = "org.apache.tomcat.embed:tomcat-embed-websocket", version.ref = "tomcat" }
+undertow-websockets-jsr = { module = "io.undertow:undertow-websockets-jsr", version.ref = "undertow" }
 
 [bundles]
 

@@ -17,6 +17,8 @@ dependencies {
     testAnnotationProcessor(projects.micronautVaadinProcessor)
     testImplementation(projects.micronautVaadinServlet)
     testImplementation(mnServlet.micronaut.http.server.undertow)
+    testImplementation(mnServlet.micronaut.servlet.websocket)
+    testImplementation(libs.undertow.websockets.jsr)
     testImplementation(mn.micronaut.http.client.jdk)
     testImplementation(mnSerde.micronaut.serde.jackson)
     testImplementation(libs.vaadin.core.components)
