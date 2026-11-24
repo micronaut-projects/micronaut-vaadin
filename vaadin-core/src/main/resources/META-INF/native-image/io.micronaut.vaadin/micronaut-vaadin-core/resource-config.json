@@ -1,0 +1,14 @@
+{
+  "resources": {
+    "includes": [
+      { "pattern": "\\QMETA-INF/VAADIN/\\E.*" },
+      { "pattern": "\\QMETA-INF/resources/\\E.*" },
+      { "pattern": "\\QMETA-INF/frontend/\\E.*" },
+      { "pattern": "\\Qvaadin-i18n/\\E.*" },
+      { "pattern": "\\Qvaadin-featureflags.properties\\E" },
+      { "pattern": "\\Qcom/vaadin/flow/server/\\E.*" },
+      { "pattern": "\\Qcom/vaadin/flow/router/\\E.*" },
+      { "pattern": "\\Qcom/vaadin/flow/component/\\E.*\\.json" }
+    ]
+  }
+}

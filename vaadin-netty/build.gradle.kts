@@ -13,6 +13,7 @@ dependencies {
     api(mn.micronaut.websocket)
     // the push endpoints let Micronaut Security, when present, hand their access control to Vaadin
     compileOnly(mnSecurity.micronaut.security.annotations)
+    compileOnly(mn.graalvm.nativeimage)
 
     testAnnotationProcessor(mn.micronaut.inject.java)
     testAnnotationProcessor(projects.micronautVaadinProcessor)
