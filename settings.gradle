@@ -20,6 +20,11 @@ rootProject.name = 'vaadin-parent'
 include 'vaadin-bom'
 include 'vaadin-browserless-test'
 include 'vaadin-core'
+// vaadin-dev builds against the development mode of Micronaut core (micronaut-core#13654), which is not released:
+// it is included when a checkout of that branch is passed with --include-build
+if (gradle.startParameter.includedBuilds.any { new File(it, 'dev-tck').directory }) {
+    include 'vaadin-dev'
+}
 include 'vaadin-netty'
 include 'vaadin-processor'
 include 'vaadin-security'

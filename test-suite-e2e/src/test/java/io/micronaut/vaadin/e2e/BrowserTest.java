@@ -1,6 +1,7 @@
 package io.micronaut.vaadin.e2e;
 
 import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.FilePayload;
@@ -106,6 +107,25 @@ class BrowserTest {
         page.navigate(url("/push"));
         page.locator("#start").click();
         assertThat(page.locator("#status")).hasText("pushed");
+    }
+
+    @Test
+    void twoTabsOfOneSessionHaveTheirOwnPushConnections() {
+        // one browser context: the tabs share the cookie, and so the HTTP session
+        try (BrowserContext context = browser.newContext()) {
+            Page first = context.newPage();
+            Page second = context.newPage();
+            first.navigate(url("/push"));
+            second.navigate(url("/push"));
+            assertThat(second.locator("#status")).hasText("waiting");
+
+            first.locator("#start").click();
+            assertThat(first.locator("#status")).hasText("pushed");
+            // closing a tab closes its own push connection, not that of the other tab
+            first.close();
+            second.locator("#start").click();
+            assertThat(second.locator("#status")).hasText("pushed");
+        }
     }
 
     @Test
