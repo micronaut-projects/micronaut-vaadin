@@ -4,6 +4,7 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.assertions.PlaywrightAssertions;
 import com.microsoft.playwright.options.FilePayload;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -43,6 +44,9 @@ class BrowserTest {
 
     @BeforeAll
     void startBrowser() {
+        // the first page of development mode builds its frontend: a busy build machine can take longer than the
+        // default of 5 seconds
+        PlaywrightAssertions.setDefaultAssertionTimeout(30_000);
         playwright = Playwright.create();
         browser = playwright.chromium().launch();
     }
