@@ -26,12 +26,15 @@ micronaut-servlet = "6.2.2"
 micronaut-session = "5.2.0"
 groovy = "4.0.24"
 spock = "2.3-groovy-4.0"
+# The Vaadin platform release, for the free components (vaadin-core) used to compile against the browserless testers
+vaadin = "25.3.1"
 
 # Managed versions appear in the BOM
 # Vaadin 25.3.1 pairs Flow 25.3.2 with Flow Components 25.3.1. The platform's vaadin-bom is not
 # imported because it also imports the Spring, Hilla and commercial TestBench BOMs.
 managed-vaadin-flow = "25.3.2"
 managed-vaadin-flow-components = "25.3.1"
+managed-vaadin-browserless-test = "25.3.0"
 
 [libraries]
 # Core
@@ -47,11 +50,24 @@ micronaut-session = { module = "io.micronaut.session:micronaut-session-bom", ver
 #
 boms-vaadin-flow = { module = "com.vaadin:flow-bom", version.ref = "managed-vaadin-flow" }
 boms-vaadin-flow-components = { module = "com.vaadin:flow-components-bom", version.ref = "managed-vaadin-flow-components" }
+boms-vaadin-browserless-test = { module = "com.vaadin:browserless-test-bom", version.ref = "managed-vaadin-browserless-test" }
 
 # Other libraries used by the project but non managed
 
 # Versions from boms-vaadin-flow
 vaadin-flow-server = { module = "com.vaadin:flow-server" }
+vaadin-flow-push = { module = "com.vaadin:flow-push" }
+vaadin-flow-html-components = { module = "com.vaadin:flow-html-components" }
+vaadin-ordered-layout = { module = "com.vaadin:vaadin-ordered-layout-flow" }
+vaadin-button = { module = "com.vaadin:vaadin-button-flow" }
+vaadin-text-field = { module = "com.vaadin:vaadin-text-field-flow" }
+
+# Versions from boms-vaadin-browserless-test
+vaadin-browserless-test-shared = { module = "com.vaadin:browserless-test-shared" }
+vaadin-browserless-test-junit6 = { module = "com.vaadin:browserless-test-junit6" }
+
+# The free Vaadin components, from the platform release
+vaadin-core-components = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
 
 [bundles]
 

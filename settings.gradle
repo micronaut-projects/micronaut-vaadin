@@ -18,7 +18,9 @@ dependencyResolutionManagement {
 rootProject.name = 'vaadin-parent'
 
 include 'vaadin-bom'
+include 'vaadin-browserless-test'
 include 'vaadin-core'
+include 'vaadin-processor'
 
 include 'test-suite'
 include 'test-suite-groovy'
