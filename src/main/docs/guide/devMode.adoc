@@ -15,6 +15,10 @@ While the application uses only Vaadin's own components, Vaadin serves its pre-b
 
 Vaadin starts development mode with the views and other Vaadin types known at compile time, so it finds the frontend dependencies of the application without scanning the classpath.
 
+=== Live updates of the frontend
+
+With `vaadin.frontend.hotdeploy` set to `true`, Vaadin runs Vite, and the browser receives the changes of the frontend sources as they are made. The Netty server proxies the browser's WebSocket to Vite on the port of the application, as a servlet container does, so that it works when the browser does not run on the same machine as Vite, such as with a development container.
+
 === Project folders
 
 Development mode reads the frontend sources of the project and writes generated files into it. Vaadin's Gradle and Maven plugins tell it where the project and its build folder are. Without them, set the folders in the configuration:

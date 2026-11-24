@@ -11,6 +11,11 @@ dependencies {
     api(mnSession.micronaut.session)
     // push over WebSockets
     api(mn.micronaut.websocket)
+    // the servlet WebSocket API, which Vaadin's development server uses to proxy Vite: the Netty runtime serves
+    // that proxy itself
+    implementation(libs.jakarta.websocket.api)
+    implementation(libs.jakarta.websocket.client.api)
+    compileOnly(libs.vaadin.dev.server)
     // the push endpoints let Micronaut Security, when present, hand their access control to Vaadin
     compileOnly(mnSecurity.micronaut.security.annotations)
     compileOnly(mn.graalvm.nativeimage)
