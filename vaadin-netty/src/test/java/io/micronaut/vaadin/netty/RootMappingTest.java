@@ -13,6 +13,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,5 +72,10 @@ class RootMappingTest {
         BlockingHttpClient blocking = client.toBlocking();
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve("/excluded/page"));
         assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
+    }
+
+    @Test
+    void pushOpensAWebSocketAtTheRootPath() {
+        assertTrue(WebSockets.upgrades(URI.create("ws://localhost:" + server.getPort() + "/VAADIN/push?v-r=push&v-uiId=0&v-pushId=none")));
     }
 }

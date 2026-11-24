@@ -6,9 +6,12 @@ import io.micronaut.http.client.BlockingHttpClient;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.runtime.server.EmbeddedServer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,6 +30,9 @@ class PrefixMappingTest {
     @Client("/")
     HttpClient client;
 
+    @Inject
+    EmbeddedServer server;
+
     @Test
     void vaadinServesItsPrefix() {
         String body = client.toBlocking().retrieve("/ui/");
@@ -39,5 +45,10 @@ class PrefixMappingTest {
         BlockingHttpClient blocking = client.toBlocking();
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> blocking.retrieve("/missing"));
         assertEquals(HttpStatus.NOT_FOUND, e.getStatus());
+    }
+
+    @Test
+    void pushOpensAWebSocketAtThePrefixPath() {
+        assertTrue(WebSockets.upgrades(URI.create("ws://localhost:" + server.getPort() + "/ui/VAADIN/push?v-r=push&v-uiId=0&v-pushId=none")));
     }
 }
