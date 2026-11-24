@@ -44,6 +44,9 @@ import java.util.Optional;
 @Singleton
 final class VaadinNettyRoutes implements HttpRoutes {
 
+    private static final String SECURED = "io.micronaut.security.annotation.Secured";
+    private static final String IS_ANONYMOUS = "isAnonymous()";
+
     private final VaadinNettyRuntime runtime;
     private final StaticResourceResolver staticResources;
     private final List<String> excludeUrls;
@@ -72,6 +75,8 @@ final class VaadinNettyRoutes implements HttpRoutes {
         group.any(uri)
             // Vaadin reads every kind of body itself, uploads included
             .consumesAll()
+            // Micronaut Security, when present, lets Vaadin's requests through: Vaadin controls the access to its views
+            .annotate(SECURED, secured -> secured.values(IS_ANONYMOUS))
             .executeOn(TaskExecutors.BLOCKING)
             .where(RouteCondition.custom(this::handledByVaadin))
             .body()
