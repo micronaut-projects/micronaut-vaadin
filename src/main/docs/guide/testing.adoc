@@ -10,3 +10,30 @@ snippet::io.micronaut.vaadin.docs.views.GreetingViewTest[tags="test", indent=0, 
 <4> Scoped beans, here a UI-scoped one, behave as in the running application.
 
 The views, components and testers are those of the `com.vaadin:browserless-test` library: see the https://vaadin.com/docs/latest/flow/testing/browserless[Vaadin documentation].
+
+=== End-to-end tests
+
+Browserless tests run the views on the server. To test the application in a real browser, start it with `@MicronautTest` and drive it with a browser automation library such as https://playwright.dev/java/[Playwright]:
+
+[source,java]
+----
+@MicronautTest
+class GreetingViewBrowserTest {
+
+    @Inject
+    EmbeddedServer server;
+
+    @Test
+    void greets() {
+        try (Playwright playwright = Playwright.create(); Browser browser = playwright.chromium().launch()) {
+            Page page = browser.newPage();
+            page.navigate(server.getURI().resolve("/greeting").toString());
+            page.getByLabel("Name").fill("Micronaut");
+            page.getByText("Greet").click();
+            assertThat(page.getByText("Hello Micronaut")).isVisible();
+        }
+    }
+}
+----
+
+In development mode with only Vaadin's own components, the application serves Vaadin's pre-built development bundle, so these tests need no Node.js either.
