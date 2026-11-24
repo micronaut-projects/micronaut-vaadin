@@ -18,6 +18,7 @@ package io.micronaut.vaadin.startup;
 import com.vaadin.flow.di.LookupInitializer;
 import com.vaadin.flow.server.VaadinServletContext;
 import com.vaadin.flow.server.startup.AnnotationValidator;
+import com.vaadin.flow.server.startup.ClassLoaderAwareServletContainerInitializer;
 import com.vaadin.flow.server.startup.ErrorNavigationTargetInitializer;
 import com.vaadin.flow.server.startup.LookupServletContainerInitializer;
 import com.vaadin.flow.server.startup.RouteRegistryInitializer;
@@ -28,7 +29,6 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.vaadin.MicronautLookupInitializer;
 import jakarta.inject.Singleton;
-import jakarta.servlet.ServletContainerInitializer;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.HandlesTypes;
@@ -90,7 +90,7 @@ public class VaadinStartup {
         new LookupServletContainerInitializer().process(lookupTypes, servletContext);
 
         Set<Class<?>> types = typeIndex.getTypes();
-        List<ServletContainerInitializer> initializers = List.of(
+        List<ClassLoaderAwareServletContainerInitializer> initializers = List.of(
             new RouteRegistryInitializer(),
             new ErrorNavigationTargetInitializer(),
             new VaadinAppShellInitializer(),
@@ -98,8 +98,10 @@ public class VaadinStartup {
             new AnnotationValidator(),
             new WebComponentExporterAwareValidator()
         );
-        for (ServletContainerInitializer initializer : initializers) {
-            initializer.onStartup(handledTypes(initializer, types), servletContext);
+        for (ClassLoaderAwareServletContainerInitializer initializer : initializers) {
+            // the lookup is in place, so the initializers run straight away rather than through onStartup,
+            // which also expects the servlet context to have a class loader
+            initializer.process(handledTypes(initializer, types), servletContext);
         }
     }
 
@@ -108,7 +110,7 @@ public class VaadinStartup {
      * the classes annotated with one of the annotations, or extending or implementing one of the types.
      */
     @SuppressWarnings("unchecked")
-    private static Set<Class<?>> handledTypes(ServletContainerInitializer initializer, Set<Class<?>> types) {
+    private static Set<Class<?>> handledTypes(ClassLoaderAwareServletContainerInitializer initializer, Set<Class<?>> types) {
         HandlesTypes handlesTypes = initializer.getClass().getAnnotation(HandlesTypes.class);
         Set<Class<?>> handled = new LinkedHashSet<>();
         if (handlesTypes == null) {

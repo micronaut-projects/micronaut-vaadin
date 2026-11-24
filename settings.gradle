@@ -21,11 +21,14 @@ include 'vaadin-bom'
 include 'vaadin-browserless-test'
 include 'vaadin-core'
 include 'vaadin-processor'
+include 'vaadin-servlet'
 
 include 'test-suite'
 include 'test-suite-groovy'
 include 'test-suite-kotlin'
 include 'test-suite-python'
+include 'test-suite-tomcat'
+include 'test-suite-undertow'
 
 enableFeaturePreview 'TYPESAFE_PROJECT_ACCESSORS'
 

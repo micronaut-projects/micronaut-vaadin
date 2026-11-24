@@ -7,6 +7,7 @@ Micronaut Vaadin integrates Vaadin Flow 25 with Micronaut 5.3, on the Netty serv
 - `vaadin-core/` is the transport-neutral core, published as `micronaut-vaadin-core` (`useStandardizedProjectNames`).
 - `vaadin-processor/` makes the classes Vaadin instantiates into beans; their definitions are the type index that replaces classpath scanning.
 - `vaadin-browserless-test/` provides `MicronautBrowserlessTest`, on Vaadin's browserless test library.
+- `vaadin-servlet/` runs Vaadin on Micronaut Servlet (Jetty, Tomcat, Undertow). Its tests run on Jetty; `test-suite-tomcat` and `test-suite-undertow` compile the same test sources against the other containers.
 - `vaadin-bom/` is the BOM. It imports Vaadin's `flow-bom`, `flow-components-bom` and `browserless-test-bom`, not the platform `vaadin-bom`, which also imports the Spring, Hilla and commercial TestBench BOMs.
 - `buildSrc/src/main/groovy/io.micronaut.build.internal.vaadin-*.gradle` holds the convention plugins: `vaadin-base`, `vaadin-module` for published modules, and `vaadin-tests` for the documentation suites.
 - `test-suite`, `test-suite-kotlin`, `test-suite-groovy` and `test-suite-python` hold the guide samples in Java, Kotlin (KSP), Groovy and Python. Scala is intentionally excluded.

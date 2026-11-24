@@ -28,6 +28,8 @@ groovy = "4.0.24"
 spock = "2.3-groovy-4.0"
 # The Vaadin platform release, for the free components (vaadin-core) used to compile against the browserless testers
 vaadin = "25.3.1"
+# The Jetty release of micronaut-servlet, to compile the session support against
+jetty = "12.1.10"
 
 # Managed versions appear in the BOM
 # Vaadin 25.3.1 pairs Flow 25.3.2 with Flow Components 25.3.1. The platform's vaadin-bom is not
@@ -68,6 +70,8 @@ vaadin-browserless-test-junit6 = { module = "com.vaadin:browserless-test-junit6"
 
 # The free Vaadin components, from the platform release
 vaadin-core-components = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
+
+jetty-ee10-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet", version.ref = "jetty" }
 
 [bundles]
 
