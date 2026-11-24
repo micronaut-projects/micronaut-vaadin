@@ -21,6 +21,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.body.AsyncRequestBody;
 import io.micronaut.http.body.CloseableByteBody;
 import io.micronaut.scheduling.TaskExecutors;
@@ -43,13 +44,20 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.servlet.ServletException;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -65,6 +73,8 @@ import java.util.concurrent.Executor;
 final class VaadinNettyRuntime {
 
     static final String SERVLET_NAME = "vaadinServlet";
+    private static final String UPLOAD_PREFIX = "vaadin-uploads-";
+    private static final Logger LOG = LoggerFactory.getLogger(VaadinNettyRuntime.class);
     private static final String WEBSOCKET_ATTRIBUTE = AtmosphereWebSocket.class.getName();
     private static final String PATH_SEPARATOR = "/";
     private static final String VAADIN_PATH = PATH_SEPARATOR + Constants.VAADIN_MAPPING.substring(0, Constants.VAADIN_MAPPING.length() - 1);
@@ -76,6 +86,8 @@ final class VaadinNettyRuntime {
     private final Executor executor;
     private final String prefix;
     private final AtmosphereFramework atmosphere;
+    // guarded by this
+    private @Nullable Path uploadDirectory;
 
     @SuppressWarnings("unchecked")
     VaadinNettyRuntime(ApplicationContext applicationContext,
@@ -123,23 +135,108 @@ final class VaadinNettyRuntime {
      * @return The response
      */
     CompletionStage<HttpResponse<byte[]>> service(HttpRequest<?> request, AsyncRequestBody body) {
-        String path = request.getPath();
-        String servletPath = servletPath(path);
-        @Nullable String pathInfo = pathInfo(path);
+        if (isMultipart(request)) {
+            // uploads: the parts are read into temporary files, which Vaadin reads through getParts()
+            List<NettyPart> parts = readParts(body);
+            return service(request, InputStream.nullInputStream(), parts)
+                .whenComplete((response, error) -> deleteParts(parts));
+        }
         try (CloseableByteBody byteBody = body.takeBody(); InputStream in = byteBody.toInputStream()) {
-            NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath, pathInfo);
-            NettyHttpServletResponse servletResponse = new NettyHttpServletResponse();
-            servletRequest.setAsyncContextFactory(() -> new NettyAsyncContext(servletRequest, servletResponse, scheduler, executor));
+            return service(request, in, null);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private CompletionStage<HttpResponse<byte[]>> service(HttpRequest<?> request, InputStream in, @Nullable List<NettyPart> parts) {
+        String path = request.getPath();
+        NettyHttpServletRequest servletRequest = new NettyHttpServletRequest(request, in, servletContext, sessionStore, servletPath(path), pathInfo(path));
+        if (parts != null) {
+            servletRequest.setParts(parts);
+        }
+        NettyHttpServletResponse servletResponse = new NettyHttpServletResponse();
+        servletRequest.setAsyncContextFactory(() -> new NettyAsyncContext(servletRequest, servletResponse, scheduler, executor));
+        try {
             servlet.service(servletRequest, servletResponse);
-            NettyAsyncContext asyncContext = servletRequest.asyncContext();
-            if (asyncContext == null) {
-                return CompletableFuture.<HttpResponse<byte[]>>completedFuture(servletResponse.toHttpResponse());
-            }
-            return asyncContext.whenComplete().<HttpResponse<byte[]>>thenApply(done -> servletResponse.toHttpResponse());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (ServletException e) {
             throw new IllegalStateException("Vaadin failed to serve " + path, e);
+        }
+        NettyAsyncContext asyncContext = servletRequest.asyncContext();
+        if (asyncContext == null) {
+            return CompletableFuture.<HttpResponse<byte[]>>completedFuture(servletResponse.toHttpResponse());
+        }
+        return asyncContext.whenComplete().<HttpResponse<byte[]>>thenApply(done -> servletResponse.toHttpResponse());
+    }
+
+    private static boolean isMultipart(HttpRequest<?> request) {
+        return request.getContentType()
+            .map(type -> "multipart".equalsIgnoreCase(type.getType()))
+            .orElse(false);
+    }
+
+    /**
+     * The directory of the files of uploaded parts, which only the user running the application may read or write:
+     * the temporary directory is shared with the other users of the machine. Created on the first upload.
+     */
+    private synchronized Path uploadDirectory() throws IOException {
+        Path directory = uploadDirectory;
+        if (directory == null || !Files.isDirectory(directory)) {
+            directory = createPrivateDirectory();
+            uploadDirectory = directory;
+        }
+        return directory;
+    }
+
+    private synchronized void deleteUploadDirectory() {
+        if (uploadDirectory != null) {
+            try {
+                Files.deleteIfExists(uploadDirectory);
+            } catch (IOException e) {
+                LOG.debug("Cannot delete the directory of uploaded parts {}", uploadDirectory, e);
+            }
+        }
+    }
+
+    private static Path createPrivateDirectory() throws IOException {
+        if (FileSystems.getDefault().supportedFileAttributeViews().contains("posix")) {
+            return Files.createTempDirectory(UPLOAD_PREFIX, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+        }
+        // elsewhere, as on Windows, the temporary directory of the JVM is in the profile of the user, whose permissions
+        // the directory inherits
+        return Files.createTempDirectory(Path.of(System.getProperty("java.io.tmpdir")), UPLOAD_PREFIX);
+    }
+
+    private List<NettyPart> readParts(AsyncRequestBody body) {
+        List<NettyPart> parts = new ArrayList<>();
+        try {
+            body.parts().forEach(part -> {
+                Path file;
+                try {
+                    // a new file, which the part creates
+                    file = uploadDirectory().resolve(UUID.randomUUID() + ".part");
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                String contentType = part.contentType().map(MediaType::toString).orElse(null);
+                parts.add(new NettyPart(part.name(), part.fileName(), contentType, file));
+                return part.transferTo(file);
+            }).toCompletableFuture().join();
+        } catch (RuntimeException e) {
+            deleteParts(parts);
+            throw e;
+        }
+        return parts;
+    }
+
+    private static void deleteParts(List<NettyPart> parts) {
+        for (NettyPart part : parts) {
+            try {
+                part.delete();
+            } catch (IOException e) {
+                LOG.debug("Cannot delete the temporary file of an uploaded part", e);
+            }
         }
     }
 
@@ -211,6 +308,7 @@ final class VaadinNettyRuntime {
     @PreDestroy
     void destroy() {
         servlet.destroy();
+        deleteUploadDirectory();
     }
 
     private static String prefixOf(String mapping) {

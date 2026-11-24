@@ -70,6 +70,8 @@ final class VaadinNettyRoutes implements HttpRoutes {
 
     private void route(HttpRouteGroup group, String uri) {
         group.any(uri)
+            // Vaadin reads every kind of body itself, uploads included
+            .consumesAll()
             .executeOn(TaskExecutors.BLOCKING)
             .where(RouteCondition.custom(this::handledByVaadin))
             .body()
