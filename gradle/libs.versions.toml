@@ -63,6 +63,7 @@ boms-vaadin-browserless-test = { module = "com.vaadin:browserless-test-bom", ver
 vaadin-flow-server = { module = "com.vaadin:flow-server" }
 vaadin-flow-push = { module = "com.vaadin:flow-push" }
 vaadin-flow-html-components = { module = "com.vaadin:flow-html-components" }
+vaadin-dev-server = { module = "com.vaadin:vaadin-dev-server" }
 vaadin-ordered-layout = { module = "com.vaadin:vaadin-ordered-layout-flow" }
 vaadin-button = { module = "com.vaadin:vaadin-button-flow" }
 vaadin-text-field = { module = "com.vaadin:vaadin-text-field-flow" }
@@ -73,6 +74,7 @@ vaadin-browserless-test-junit6 = { module = "com.vaadin:browserless-test-junit6"
 
 # The free Vaadin components, from the platform release
 vaadin-core-components = { module = "com.vaadin:vaadin-core", version.ref = "vaadin" }
+vaadin-dev-bundle = { module = "com.vaadin:vaadin-dev-bundle", version.ref = "vaadin" }
 
 jetty-ee10-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet", version.ref = "jetty" }
 jetty-ee10-websocket-jakarta-server = { module = "org.eclipse.jetty.ee10.websocket:jetty-ee10-websocket-jakarta-server", version.ref = "jetty" }

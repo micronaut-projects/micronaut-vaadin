@@ -16,12 +16,10 @@
 package io.micronaut.vaadin;
 
 import com.vaadin.flow.function.DeploymentConfiguration;
-import com.vaadin.flow.server.InitParameters;
 import com.vaadin.flow.server.ServiceException;
 import com.vaadin.flow.server.VaadinServlet;
 import com.vaadin.flow.server.VaadinServletService;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.core.naming.NameUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
@@ -29,12 +27,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.Serial;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -49,8 +41,6 @@ public class MicronautVaadinServlet extends VaadinServlet {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final List<String> INIT_PARAMETERS = initParameterNames();
 
     private final transient ApplicationContext applicationContext;
     private final boolean rootMapping;
@@ -94,39 +84,8 @@ public class MicronautVaadinServlet extends VaadinServlet {
     protected DeploymentConfiguration createDeploymentConfiguration(Properties initParameters) {
         Properties properties = new Properties();
         properties.putAll(initParameters);
-        for (String name : INIT_PARAMETERS) {
-            configuredValue(name).ifPresent(value -> properties.put(name, value));
-        }
+        properties.putAll(VaadinInitParameters.from(applicationContext));
         return super.createDeploymentConfiguration(properties);
-    }
-
-    private Optional<String> configuredValue(String initParameter) {
-        String property = VaadinConfigurationProperties.PREFIX + "." + initParameter;
-        Optional<String> value = applicationContext.getProperty(hyphenate(property), String.class);
-        return value.isPresent() ? value : applicationContext.getProperty(property, String.class);
-    }
-
-    private static String hyphenate(String property) {
-        List<String> segments = new ArrayList<>();
-        for (String segment : property.split("\\.")) {
-            segments.add(NameUtils.hyphenate(segment));
-        }
-        return String.join(".", segments);
-    }
-
-    private static List<String> initParameterNames() {
-        List<String> names = new ArrayList<>();
-        for (Field field : InitParameters.class.getDeclaredFields()) {
-            int modifiers = field.getModifiers();
-            if (Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers) && field.getType() == String.class && !field.isSynthetic()) {
-                try {
-                    names.add((String) field.get(null));
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException("Cannot read the Vaadin initialization parameter " + field.getName(), e);
-                }
-            }
-        }
-        return Collections.unmodifiableList(names);
     }
 
     /**
