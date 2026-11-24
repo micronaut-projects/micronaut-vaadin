@@ -6,6 +6,8 @@ views:
   title: Views and Dependency Injection
 scopes:
   title: Vaadin Scopes
+nettyRuntime:
+  title: Running on Netty
 servletRuntime:
   title: Running on a Servlet Container
 devMode:
